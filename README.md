@@ -33,13 +33,11 @@ A desktop application where two LLMs play **Short Deck Texas Hold'em** heads-up 
 
 ---
 
-## Screenshots / 截图
+## Disclaimer / 声明
 
-> *（启动后即可看到完整界面）*
-
-界面分为左右两栏 / The UI has a two-panel layout：
-- **左侧 Left**：对局控制（盲注/筹码设置、手动操作、自动对局）+ 设置（API 配置）
-- **右侧 Right**：可视化牌桌 + 对局日志 + 解说席 + 行动历史
+> **本项目约 95% 的代码由 AI（Cursor + Claude）生成**，人类开发者主要负责需求设计、Prompt 调优、测试验证和最终审查。这本身也是一次「用 AI 构建 AI 对战」的实验——从代码到玩家，AI 无处不在。
+>
+> **~95% of the code in this project was written by AI** (Cursor + Claude). The human developer focused on requirement design, prompt tuning, testing, and final review. This is itself an experiment in "AI building AI battles" — AI is everywhere, from the codebase to the players.
 
 ---
 

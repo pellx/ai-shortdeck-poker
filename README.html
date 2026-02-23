@@ -169,6 +169,11 @@
   }
   .highlight { color: var(--green); font-weight: 600; }
   .section-icon { margin-right: 6px; }
+
+  /* bilingual line helper */
+  .bi { margin-bottom: 14px; }
+  .bi .zh { display: block; }
+  .bi .en { display: block; color: var(--text-muted); }
 </style>
 </head>
 <body>
@@ -191,9 +196,10 @@
 
 <h2><span class="section-icon">📖</span>What is this? / 这是什么？</h2>
 
-<p>一个桌面 GUI 应用，让两个 LLM（大语言模型）以 AI 玩家身份进行 <strong>短牌德州扑克 (Short Deck / 6+ Hold'em)</strong> 单挑对战。支持第三个 LLM 担任实时解说员，像电竞赛事一样播报牌局。</p>
-
-<p>A desktop application where two LLMs play <strong>Short Deck Texas Hold'em</strong> heads-up against each other, with an optional third LLM providing live match commentary.</p>
+<p class="bi">
+  <span class="zh">一个桌面 GUI 应用，让两个 LLM（大语言模型）以 AI 玩家身份进行 <strong>短牌德州扑克 (Short Deck / 6+ Hold'em)</strong> 单挑对战。支持第三个 LLM 担任实时解说员，像电竞赛事一样播报牌局。</span>
+  <span class="en">A desktop GUI app where two LLMs (large language models) play <strong>Short Deck (6+) Texas Hold'em</strong> heads-up as AI players. Optionally, a third LLM acts as a live commentator to narrate the match like an esports broadcast.</span>
+</p>
 
 <h3>Key Features / 核心特性</h3>
 
@@ -202,18 +208,27 @@
     <tr><th>特性 Feature</th><th>说明 Description</th></tr>
   </thead>
   <tbody>
-    <tr><td>🤖 <strong>双 AI 对战</strong></td><td>任意两个 OpenAI 兼容 API 的模型互相对决 — Any two OpenAI-compatible LLMs battle</td></tr>
-    <tr><td>🎙️ <strong>实时解说</strong></td><td>第三个 LLM 担任解说员，分析策略与心理博弈 — A third LLM provides live commentary</td></tr>
-    <tr><td>💭 <strong>选手心理活动</strong></td><td>每手牌后 AI 发表内心独白与赛后感言 — Post-hand emotions &amp; match-end reflections</td></tr>
-    <tr><td>🗣️ <strong>垃圾话</strong></td><td>AI 之间互相喊话施压 — AIs taunt and bluff each other</td></tr>
-    <tr><td>▶️ <strong>手动/自动</strong></td><td>全自动对局或逐步手动操作 — Full auto-play or step-by-step manual control</td></tr>
-    <tr><td>🎯 <strong>指定牌面</strong></td><td>手动指定任意底牌和公共牌 — Override any hole/community cards</td></tr>
-    <tr><td>🧠 <strong>深度思考</strong></td><td>支持 reasoning/thinking 模型 — Extended thinking for reasoning models</td></tr>
-    <tr><td>📝 <strong>手牌记忆</strong></td><td>AI 记住本手牌内的历史决策 — In-hand decision memory</td></tr>
-    <tr><td>🃏 <strong>完整短牌规则</strong></td><td>36 张牌、同花 &gt; 葫芦、A-6-7-8-9 — 36 cards, Flush &gt; Full House</td></tr>
-    <tr><td>🖥️ <strong>可视化牌桌</strong></td><td>绿色牌桌风格 UI，实时显示手牌/筹码/底池 — Green felt UI with live updates</td></tr>
+    <tr><td>🤖 <strong>双 AI 对战</strong><br><span class="en">Head-to-head AI duel</span></td><td><span class="zh">任意两个 OpenAI 兼容 API 的模型互相对决</span><br><span class="en">Any two OpenAI-compatible API models can battle</span></td></tr>
+    <tr><td>🎙️ <strong>实时解说</strong><br><span class="en">Live commentary</span></td><td><span class="zh">第三个 LLM 担任解说员，分析策略与心理博弈</span><br><span class="en">A third LLM provides live analysis of strategy and mind games</span></td></tr>
+    <tr><td>💭 <strong>选手心理活动</strong><br><span class="en">Inner thoughts</span></td><td><span class="zh">每手牌后 AI 发表内心独白与赛后感言</span><br><span class="en">Post-hand monologues and match-end reflections</span></td></tr>
+    <tr><td>🗣️ <strong>垃圾话</strong><br><span class="en">Trash talk</span></td><td><span class="zh">AI 之间互相喊话施压</span><br><span class="en">AIs taunt and pressure each other</span></td></tr>
+    <tr><td>▶️ <strong>手动/自动</strong><br><span class="en">Manual / Auto</span></td><td><span class="zh">全自动对局或逐步手动操作</span><br><span class="en">Full auto-play or step-by-step manual control</span></td></tr>
+    <tr><td>🎯 <strong>指定牌面</strong><br><span class="en">Card override</span></td><td><span class="zh">手动指定任意底牌和公共牌</span><br><span class="en">Override any hole and community cards</span></td></tr>
+    <tr><td>🧠 <strong>深度思考</strong><br><span class="en">Deep thinking</span></td><td><span class="zh">支持 reasoning/thinking 模型</span><br><span class="en">Supports reasoning/thinking-style models</span></td></tr>
+    <tr><td>📝 <strong>手牌记忆</strong><br><span class="en">In-hand memory</span></td><td><span class="zh">AI 记住本手牌内的历史决策</span><br><span class="en">Keeps decision history within the current hand</span></td></tr>
+    <tr><td>🃏 <strong>完整短牌规则</strong><br><span class="en">Full Short Deck rules</span></td><td><span class="zh">36 张牌、同花 &gt; 葫芦、A-6-7-8-9</span><br><span class="en">36-card deck, Flush &gt; Full House, A-6-7-8-9 straight</span></td></tr>
+    <tr><td>🖥️ <strong>可视化牌桌</strong><br><span class="en">Visual table</span></td><td><span class="zh">绿色牌桌风格 UI，实时显示手牌/筹码/底池</span><br><span class="en">Green felt UI with live hand/stack/pot updates</span></td></tr>
   </tbody>
 </table>
+
+<hr>
+
+<h2><span class="section-icon">⚠️</span>Disclaimer / 声明</h2>
+
+<blockquote>
+  <strong>本项目约 95% 的代码由 AI（Cursor + Claude）生成</strong>，人类开发者主要负责需求设计、Prompt 调优、测试验证和最终审查。这本身也是一次「用 AI 构建 AI 对战」的实验——从代码到玩家，AI 无处不在。<br><br>
+  <strong>~95% of the code in this project was written by AI</strong> (Cursor + Claude). The human developer focused on requirement design, prompt tuning, testing, and final review. This is itself an experiment in "AI building AI battles" — AI is everywhere, from the codebase to the players.
+</blockquote>
 
 <hr>
 
@@ -221,21 +236,21 @@
 
 <h3>Prerequisites / 前置条件</h3>
 <ul>
-  <li><strong>Python 3.12+</strong></li>
-  <li><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> — 推荐的 Python 包管理器</li>
-  <li>至少一个 <strong>OpenAI 兼容 API</strong>（DeepSeek / 豆包 / OpenAI / Gemini via proxy 等）</li>
+  <li class="bi"><span class="zh"><strong>Python 3.12+</strong></span><span class="en"><strong>Python 3.12+</strong></span></li>
+  <li class="bi"><span class="zh"><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> — 推荐的 Python 包管理器</span><span class="en"><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> — recommended Python package manager</span></li>
+  <li class="bi"><span class="zh">至少一个 <strong>OpenAI 兼容 API</strong>（DeepSeek / 豆包 / OpenAI / Gemini via proxy 等）</span><span class="en">At least one <strong>OpenAI-compatible API</strong> (DeepSeek / Doubao / OpenAI / Gemini via proxy, etc.)</span></li>
 </ul>
 
 <h3>1. Clone &amp; Install / 克隆与安装</h3>
 <pre><code>git clone https://github.com/usermbzlj/ai-shortdeck-poker.git
 cd ai-shortdeck-poker
 
-<span class="comment"># 使用 uv 创建虚拟环境并安装依赖</span>
+<span class="comment"># 使用 uv 创建虚拟环境并安装依赖 / Create venv &amp; install deps with uv</span>
 uv sync</code></pre>
 
 <h3>2. Configure / 配置</h3>
 <pre><code>cp .env.example .env
-<span class="comment"># 编辑 .env，填入你的 API 密钥</span></code></pre>
+<span class="comment"># 编辑 .env，填入你的 API 密钥 / Edit .env and fill in your API keys</span></code></pre>
 
 <pre><code><span class="comment"># AI 选手 A / Player A</span>
 A_NAME=DeepSeek
@@ -266,19 +281,19 @@ COMMENTATOR_MODEL=deepseek-chat</code></pre>
 
 <h3>全自动模式 / Full Auto Mode</h3>
 <ol class="steps">
-  <li>配好 <code>.env</code> 后启动程序</li>
-  <li>点击 <strong>「开始新比赛」</strong></li>
-  <li>点击 <strong>「▶ 开始自动对局」</strong></li>
-  <li>坐下来看两个 AI 互相厮杀 🍿</li>
+  <li class="bi"><span class="zh">配好 <code>.env</code> 后启动程序</span><span class="en">Launch the app after configuring <code>.env</code></span></li>
+  <li class="bi"><span class="zh">点击 <strong>「开始新比赛」</strong></span><span class="en">Click <strong>“Start New Match”</strong></span></li>
+  <li class="bi"><span class="zh">点击 <strong>「▶ 开始自动对局」</strong></span><span class="en">Click <strong>“▶ Start Auto Play”</strong></span></li>
+  <li class="bi"><span class="zh">坐下来看两个 AI 互相厮杀 🍿</span><span class="en">Sit back and watch two AIs battle 🍿</span></li>
 </ol>
 
 <h3>手动模式 / Manual Mode</h3>
 <ol class="steps">
-  <li>点击 <strong>「开始新比赛」</strong> → <strong>「开始下一手」</strong></li>
-  <li>（可选）手动指定底牌/公共牌</li>
-  <li>点击 <strong>「随机补齐缺牌」</strong> 发牌</li>
-  <li>用手动操作按钮替 AI 做决策</li>
-  <li>每轮行动结束后点 <strong>「发下一轮公共牌」</strong> 或 <strong>「摊牌结算」</strong></li>
+  <li class="bi"><span class="zh">点击 <strong>「开始新比赛」</strong> → <strong>「开始下一手」</strong></span><span class="en">Click <strong>“Start New Match”</strong> → <strong>“Next Hand”</strong></span></li>
+  <li class="bi"><span class="zh">（可选）手动指定底牌/公共牌</span><span class="en">(Optional) Manually set hole/community cards</span></li>
+  <li class="bi"><span class="zh">点击 <strong>「随机补齐缺牌」</strong> 发牌</span><span class="en">Click <strong>“Fill Missing Cards Randomly”</strong> to deal</span></li>
+  <li class="bi"><span class="zh">用手动操作按钮替 AI 做决策</span><span class="en">Use manual action buttons to decide for the AI</span></li>
+  <li class="bi"><span class="zh">每轮行动结束后点 <strong>「发下一轮公共牌」</strong> 或 <strong>「摊牌结算」</strong></span><span class="en">After each betting round, click <strong>“Deal Next Street”</strong> or <strong>“Showdown”</strong></span></li>
 </ol>
 
 <hr>
@@ -304,11 +319,46 @@ COMMENTATOR_MODEL=deepseek-chat</code></pre>
     <tr><th>文件 File</th><th>行数 LoC</th><th>职责 Role</th></tr>
   </thead>
   <tbody>
-    <tr><td><code>core.py</code></td><td>~890</td><td>游戏引擎核心：36 张短牌、发牌、下注逻辑、手牌评估（7 选 5 最优组合）、LLM HTTP 客户端</td></tr>
-    <tr><td><code>controller.py</code></td><td>~1070</td><td>控制器：构建 Prompt、异步调用 LLM、解析 AI 决策、驱动解说员、自动对局状态机</td></tr>
-    <tr><td><code>main.py</code></td><td>~990</td><td>PySide6 GUI：牌桌可视化、设置面板、手动/自动控制、.env 读写</td></tr>
-    <tr><td><code>prompts.py</code></td><td>~166</td><td>所有 Prompt 模板：AI 玩家 System/User Prompt、解说员 Prompt、心理活动 Prompt</td></tr>
-    <tr><td><code>test_api.py</code></td><td>~150</td><td>API 连通性测试：逐一测试所有配置的 LLM endpoint</td></tr>
+    <tr>
+      <td><code>core.py</code></td>
+      <td>~890</td>
+      <td>
+        <span class="zh">游戏引擎核心：36 张短牌、发牌、下注逻辑、手牌评估（7 选 5 最优组合）、LLM HTTP 客户端</span><br>
+        <span class="en">Engine core: 36-card Short Deck, dealing, betting logic, hand evaluation (best 5 out of 7), LLM HTTP client</span>
+      </td>
+    </tr>
+    <tr>
+      <td><code>controller.py</code></td>
+      <td>~1070</td>
+      <td>
+        <span class="zh">控制器：构建 Prompt、异步调用 LLM、解析 AI 决策、驱动解说员、自动对局状态机</span><br>
+        <span class="en">Controller: prompt building, async LLM calls, parsing decisions, driving commentary, auto-play state machine</span>
+      </td>
+    </tr>
+    <tr>
+      <td><code>main.py</code></td>
+      <td>~990</td>
+      <td>
+        <span class="zh">PySide6 GUI：牌桌可视化、设置面板、手动/自动控制、.env 读写</span><br>
+        <span class="en">PySide6 GUI: table visualization, settings panel, manual/auto controls, .env read/write</span>
+      </td>
+    </tr>
+    <tr>
+      <td><code>prompts.py</code></td>
+      <td>~166</td>
+      <td>
+        <span class="zh">所有 Prompt 模板：AI 玩家 System/User Prompt、解说员 Prompt、心理活动 Prompt</span><br>
+        <span class="en">All prompt templates: player system/user prompts, commentator prompt, inner-thought prompts</span>
+      </td>
+    </tr>
+    <tr>
+      <td><code>test_api.py</code></td>
+      <td>~150</td>
+      <td>
+        <span class="zh">API 连通性测试：逐一测试所有配置的 LLM endpoint</span><br>
+        <span class="en">API connectivity tests: checks every configured LLM endpoint</span>
+      </td>
+    </tr>
   </tbody>
 </table>
 
@@ -319,48 +369,59 @@ COMMENTATOR_MODEL=deepseek-chat</code></pre>
 <h3>AI 选手配置 / AI Player Config</h3>
 <table>
   <thead>
-    <tr><th>变量</th><th>说明</th><th>示例</th></tr>
+    <tr>
+      <th><span class="zh">变量</span><br><span class="en">Variable</span></th>
+      <th><span class="zh">说明</span><br><span class="en">Description</span></th>
+      <th><span class="zh">示例</span><br><span class="en">Example</span></th>
+    </tr>
   </thead>
   <tbody>
-    <tr><td><code>A_NAME</code> / <code>B_NAME</code></td><td>显示名称 / Display name</td><td><code>DeepSeek</code></td></tr>
-    <tr><td><code>A_BASE_URL</code> / <code>B_BASE_URL</code></td><td>API 地址 / Endpoint</td><td><code>https://api.deepseek.com/v1</code></td></tr>
-    <tr><td><code>A_API_KEY</code> / <code>B_API_KEY</code></td><td>API 密钥 / Key</td><td><code>sk-xxx</code></td></tr>
-    <tr><td><code>A_MODEL</code> / <code>B_MODEL</code></td><td>模型名 / Model</td><td><code>deepseek-chat</code></td></tr>
-    <tr><td><code>A_TEMPERATURE</code></td><td>温度（留空用全局，<code>none</code>=不发送）</td><td><code>0.2</code></td></tr>
-    <tr><td><code>A_THINKING_ENABLED</code></td><td>深度思考 / Thinking mode</td><td><code>true</code> / <code>false</code></td></tr>
-    <tr><td><code>A_THINKING_BUDGET</code></td><td>思考 Token 上限</td><td><code>8000</code></td></tr>
-    <tr><td><code>A_MEMORY_ENABLED</code></td><td>手牌内记忆 / In-hand memory</td><td><code>true</code></td></tr>
+    <tr><td><code>A_NAME</code> / <code>B_NAME</code></td><td><span class="zh">显示名称</span><br><span class="en">Display name</span></td><td><code>DeepSeek</code></td></tr>
+    <tr><td><code>A_BASE_URL</code> / <code>B_BASE_URL</code></td><td><span class="zh">API 地址</span><br><span class="en">Endpoint</span></td><td><code>https://api.deepseek.com/v1</code></td></tr>
+    <tr><td><code>A_API_KEY</code> / <code>B_API_KEY</code></td><td><span class="zh">API 密钥</span><br><span class="en">API key</span></td><td><code>sk-xxx</code></td></tr>
+    <tr><td><code>A_MODEL</code> / <code>B_MODEL</code></td><td><span class="zh">模型名</span><br><span class="en">Model</span></td><td><code>deepseek-chat</code></td></tr>
+    <tr><td><code>A_TEMPERATURE</code></td><td><span class="zh">温度（留空用全局，<code>none</code>=不发送）</span><br><span class="en">Temperature (blank uses global; <code>none</code> = do not send)</span></td><td><code>0.2</code></td></tr>
+    <tr><td><code>A_THINKING_ENABLED</code></td><td><span class="zh">深度思考</span><br><span class="en">Thinking mode</span></td><td><code>true</code> / <code>false</code></td></tr>
+    <tr><td><code>A_THINKING_BUDGET</code></td><td><span class="zh">思考 Token 上限</span><br><span class="en">Thinking token budget</span></td><td><code>8000</code></td></tr>
+    <tr><td><code>A_MEMORY_ENABLED</code></td><td><span class="zh">手牌内记忆</span><br><span class="en">In-hand memory</span></td><td><code>true</code></td></tr>
   </tbody>
 </table>
 
 <h3>解说员配置 / Commentator Config</h3>
 <table>
   <thead>
-    <tr><th>变量</th><th>说明</th></tr>
+    <tr>
+      <th><span class="zh">变量</span><br><span class="en">Variable</span></th>
+      <th><span class="zh">说明</span><br><span class="en">Description</span></th>
+    </tr>
   </thead>
   <tbody>
-    <tr><td><code>COMMENTATOR_BASE_URL</code></td><td>API 地址</td></tr>
-    <tr><td><code>COMMENTATOR_API_KEY</code></td><td>API 密钥</td></tr>
-    <tr><td><code>COMMENTATOR_MODEL</code></td><td>模型名</td></tr>
-    <tr><td><code>COMMENTATOR_TEMPERATURE</code></td><td>温度（默认 0.7）</td></tr>
-    <tr><td><code>COMMENTATOR_ON_ACTION</code></td><td>每个动作后解说</td></tr>
-    <tr><td><code>COMMENTATOR_ON_STREET</code></td><td>每街结束后解说</td></tr>
-    <tr><td><code>COMMENTATOR_ON_HAND</code></td><td>每手结束后解说</td></tr>
-    <tr><td><code>COMMENTATOR_GOD_VIEW</code></td><td>上帝视角（看双方底牌）</td></tr>
+    <tr><td><code>COMMENTATOR_BASE_URL</code></td><td><span class="zh">API 地址</span><br><span class="en">Endpoint</span></td></tr>
+    <tr><td><code>COMMENTATOR_API_KEY</code></td><td><span class="zh">API 密钥</span><br><span class="en">API key</span></td></tr>
+    <tr><td><code>COMMENTATOR_MODEL</code></td><td><span class="zh">模型名</span><br><span class="en">Model</span></td></tr>
+    <tr><td><code>COMMENTATOR_TEMPERATURE</code></td><td><span class="zh">温度（默认 0.7）</span><br><span class="en">Temperature (default 0.7)</span></td></tr>
+    <tr><td><code>COMMENTATOR_ON_ACTION</code></td><td><span class="zh">每个动作后解说</span><br><span class="en">Comment after each action</span></td></tr>
+    <tr><td><code>COMMENTATOR_ON_STREET</code></td><td><span class="zh">每街结束后解说</span><br><span class="en">Comment after each street</span></td></tr>
+    <tr><td><code>COMMENTATOR_ON_HAND</code></td><td><span class="zh">每手结束后解说</span><br><span class="en">Comment after each hand</span></td></tr>
+    <tr><td><code>COMMENTATOR_GOD_VIEW</code></td><td><span class="zh">上帝视角（看双方底牌）</span><br><span class="en">God view (sees both hole cards)</span></td></tr>
   </tbody>
 </table>
 
 <h3>通用配置 / General</h3>
 <table>
   <thead>
-    <tr><th>变量</th><th>说明</th><th>默认</th></tr>
+    <tr>
+      <th><span class="zh">变量</span><br><span class="en">Variable</span></th>
+      <th><span class="zh">说明</span><br><span class="en">Description</span></th>
+      <th><span class="zh">默认</span><br><span class="en">Default</span></th>
+    </tr>
   </thead>
   <tbody>
-    <tr><td><code>TEMPERATURE</code></td><td>全局默认温度</td><td><code>0.2</code></td></tr>
-    <tr><td><code>DEFAULT_STACK</code></td><td>初始筹码 (USD)</td><td><code>1000.00</code></td></tr>
-    <tr><td><code>DEFAULT_SB</code></td><td>小盲注 (USD)</td><td><code>2.50</code></td></tr>
-    <tr><td><code>DEFAULT_BB</code></td><td>大盲注 (USD)</td><td><code>5.00</code></td></tr>
-    <tr><td><code>DEBUG_LOG_ENABLED</code></td><td>Debug 日志</td><td><code>false</code></td></tr>
+    <tr><td><code>TEMPERATURE</code></td><td><span class="zh">全局默认温度</span><br><span class="en">Global default temperature</span></td><td><code>0.2</code></td></tr>
+    <tr><td><code>DEFAULT_STACK</code></td><td><span class="zh">初始筹码 (USD)</span><br><span class="en">Starting stack (USD)</span></td><td><code>1000.00</code></td></tr>
+    <tr><td><code>DEFAULT_SB</code></td><td><span class="zh">小盲注 (USD)</span><br><span class="en">Small blind (USD)</span></td><td><code>2.50</code></td></tr>
+    <tr><td><code>DEFAULT_BB</code></td><td><span class="zh">大盲注 (USD)</span><br><span class="en">Big blind (USD)</span></td><td><code>5.00</code></td></tr>
+    <tr><td><code>DEBUG_LOG_ENABLED</code></td><td><span class="zh">Debug 日志</span><br><span class="en">Debug logging</span></td><td><code>false</code></td></tr>
   </tbody>
 </table>
 
@@ -368,47 +429,68 @@ COMMENTATOR_MODEL=deepseek-chat</code></pre>
 
 <h2><span class="section-icon">🃏</span>Short Deck Rules / 短牌规则简介</h2>
 
-<p>短牌德州 (6+ Hold'em) 与标准德州的关键差异：</p>
+<p class="bi">
+  <span class="zh">短牌德州 (6+ Hold'em) 与标准德州的关键差异：</span>
+  <span class="en">Key differences between Short Deck (6+) and standard Texas Hold'em:</span>
+</p>
 <ul>
-  <li><strong>36 张牌</strong>：移除所有 2-5，最小面值为 6 — 36 cards, no 2-5</li>
-  <li><strong>牌型排名不同</strong>：同花 (Flush) <span class="highlight">强于</span> 葫芦 (Full House)</li>
-  <li><strong>最小顺子</strong>：A-6-7-8-9（A 可作最低牌）</li>
-  <li><strong>更多 action</strong>：起手牌牌力更接近，弃牌 EV 损失更大</li>
+  <li class="bi"><span class="zh"><strong>36 张牌</strong>：移除所有 2-5，最小面值为 6</span><span class="en"><strong>36-card deck</strong>: removes all 2–5; the lowest rank is 6</span></li>
+  <li class="bi"><span class="zh"><strong>牌型排名不同</strong>：同花 (Flush) <span class="highlight">强于</span> 葫芦 (Full House)</span><span class="en"><strong>Different hand ranking</strong>: Flush is <span class="highlight">stronger</span> than Full House</span></li>
+  <li class="bi"><span class="zh"><strong>最小顺子</strong>：A-6-7-8-9（A 可作最低牌）</span><span class="en"><strong>Lowest straight</strong>: A-6-7-8-9 (Ace can be low)</span></li>
+  <li class="bi"><span class="zh"><strong>更多 action</strong>：起手牌牌力更接近，弃牌 EV 损失更大</span><span class="en"><strong>More action</strong>: starting hands are closer in strength; folding costs more EV</span></li>
 </ul>
 
 <hr>
 
 <h2><span class="section-icon">🛠️</span>Tech Stack / 技术栈</h2>
 <ul>
-  <li><strong>Python 3.12+</strong> — 主语言</li>
-  <li><strong>PySide6</strong> — 桌面 GUI 框架（Qt for Python）</li>
-  <li><strong>httpx</strong> — HTTP 客户端（调用 LLM API）</li>
-  <li><strong>uv</strong> — 包管理与虚拟环境</li>
+  <li class="bi"><span class="zh"><strong>Python 3.12+</strong> — 主语言</span><span class="en"><strong>Python 3.12+</strong> — main language</span></li>
+  <li class="bi"><span class="zh"><strong>PySide6</strong> — 桌面 GUI 框架（Qt for Python）</span><span class="en"><strong>PySide6</strong> — desktop GUI framework (Qt for Python)</span></li>
+  <li class="bi"><span class="zh"><strong>httpx</strong> — HTTP 客户端（调用 LLM API）</span><span class="en"><strong>httpx</strong> — HTTP client (for LLM API calls)</span></li>
+  <li class="bi"><span class="zh"><strong>uv</strong> — 包管理与虚拟环境</span><span class="en"><strong>uv</strong> — package management &amp; virtual envs</span></li>
 </ul>
 
 <hr>
 
-<h2><span class="section-icon">❓</span>FAQ</h2>
+<h2><span class="section-icon">❓</span>FAQ / 常见问题</h2>
 
 <p class="faq-q">Q: 支持哪些 LLM？/ Which LLMs are supported?</p>
-<p class="faq-a">任何提供 OpenAI 兼容 Chat Completions API 的模型都可以。已测试：DeepSeek、豆包 (Doubao)、Gemini (via proxy)、OpenAI GPT 系列、GLM 等。</p>
+<p class="faq-a bi">
+  <span class="zh">任何提供 OpenAI 兼容 Chat Completions API 的模型都可以。已测试：DeepSeek、豆包 (Doubao)、Gemini (via proxy)、OpenAI GPT 系列、GLM 等。</span>
+  <span class="en">Any model that exposes an OpenAI-compatible Chat Completions API works. Tested with DeepSeek, Doubao, Gemini (via proxy), OpenAI GPT series, GLM, etc.</span>
+</p>
 
-<p class="faq-q">Q: AI 选手 A 和 B 可以用不同的模型吗？</p>
-<p class="faq-a">当然！这正是核心玩法 —— 让不同模型互相对决，看谁扑克水平更高。Absolutely — that's the whole point!</p>
+<p class="faq-q">Q: AI 选手 A 和 B 可以用不同的模型吗？/ Can Player A and B use different models?</p>
+<p class="faq-a bi">
+  <span class="zh">当然！这正是核心玩法 —— 让不同模型互相对决，看谁扑克水平更高。</span>
+  <span class="en">Absolutely — that’s the whole point: pit different models against each other and see who plays better poker.</span>
+</p>
 
-<p class="faq-q">Q: 解说员必须配置吗？</p>
-<p class="faq-a">不是，完全可选。不配置时解说席为空，对局功能不受影响。</p>
+<p class="faq-q">Q: 解说员必须配置吗？/ Is the commentator required?</p>
+<p class="faq-a bi">
+  <span class="zh">不是，完全可选。不配置时解说席为空，对局功能不受影响。</span>
+  <span class="en">No, it’s optional. If not configured, the match still works — there’s just no commentary.</span>
+</p>
 
-<p class="faq-q">Q: 为什么选短牌而不是标准德州？</p>
-<p class="faq-a">36 张牌使牌力更接近，AI 需要更多博弈思考而非简单弃牌，对话和决策更有趣。</p>
+<p class="faq-q">Q: 为什么选短牌而不是标准德州？/ Why Short Deck instead of standard Hold’em?</p>
+<p class="faq-a bi">
+  <span class="zh">36 张牌使牌力更接近，AI 需要更多博弈思考而非简单弃牌，对话和决策更有趣。</span>
+  <span class="en">With 36 cards, hand strengths are closer together. AIs must think more strategically instead of just folding, making decisions and dialogue more interesting.</span>
+</p>
 
 <hr>
 
-<h2><span class="section-icon">📄</span>License</h2>
-<p>MIT License.</p>
+<h2><span class="section-icon">📄</span>License / 许可证</h2>
+<p class="bi">
+  <span class="zh">MIT License。</span>
+  <span class="en">MIT License.</span>
+</p>
 
 <h2><span class="section-icon">🤝</span>Contributing / 贡献</h2>
-<p>欢迎 PR 和 Issue！如有任何问题或建议，请在 GitHub Issues 中提出。</p>
+<p class="bi">
+  <span class="zh">欢迎 PR 和 Issue！如有任何问题或建议，请在 GitHub Issues 中提出。</span>
+  <span class="en">PRs and issues are welcome! If you have questions or suggestions, please open an issue on GitHub.</span>
+</p>
 
 </div>
 </body>
