@@ -1,0 +1,28 @@
+# 密钥配置（绝不上传）
+.env
+
+# Python 虚拟环境
+.venv/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# Debug 日志
+log/
+
+# uv lock file (optional, uncomment if you want to track it)
+# uv.lock
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
+desktop.ini

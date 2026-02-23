@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Short Deck LLM Duel Engine / 短牌德州 LLM 对战引擎</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --text-muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --yellow: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --code-bg: #1c2128;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Microsoft YaHei', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.7;
+    padding: 0;
+  }
+  .container {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+  h1 {
+    font-size: 2.2em;
+    margin-bottom: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--purple));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h1 .emoji { -webkit-text-fill-color: initial; }
+  h2 {
+    font-size: 1.5em;
+    color: var(--text);
+    margin-top: 48px;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  h3 {
+    font-size: 1.15em;
+    color: var(--accent);
+    margin-top: 28px;
+    margin-bottom: 10px;
+  }
+  p { margin-bottom: 14px; }
+  blockquote {
+    border-left: 4px solid var(--accent);
+    background: var(--surface);
+    padding: 16px 20px;
+    margin: 16px 0;
+    border-radius: 0 8px 8px 0;
+    color: var(--text-muted);
+    font-size: 1.05em;
+  }
+  blockquote strong { color: var(--text); }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  code {
+    background: var(--code-bg);
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+    font-size: 0.9em;
+    color: var(--green);
+  }
+  pre {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    overflow-x: auto;
+    margin: 14px 0;
+    font-size: 0.88em;
+    line-height: 1.6;
+  }
+  pre code {
+    background: none;
+    padding: 0;
+    color: var(--text);
+  }
+  .comment { color: var(--text-muted); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0;
+    font-size: 0.92em;
+  }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border: 1px solid var(--border);
+  }
+  th {
+    background: var(--surface);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  td { background: var(--bg); }
+  .badge-row {
+    display: flex;
+    gap: 8px;
+    margin: 16px 0 24px 0;
+    flex-wrap: wrap;
+  }
+  .badge {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 0.82em;
+    font-weight: 600;
+  }
+  .badge-blue { background: #1f3a5f; color: var(--accent); }
+  .badge-green { background: #1a3a1a; color: var(--green); }
+  .badge-yellow { background: #3a2f0a; color: var(--yellow); }
+  hr {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 32px 0;
+  }
+  .tree {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px 20px;
+    font-family: 'Cascadia Code', 'Consolas', monospace;
+    font-size: 0.88em;
+    line-height: 1.8;
+    color: var(--text-muted);
+  }
+  .tree .file { color: var(--text); }
+  .tree .desc { color: var(--text-muted); }
+  .faq-q {
+    font-weight: 700;
+    color: var(--yellow);
+    margin-top: 20px;
+  }
+  .faq-a { margin-bottom: 16px; }
+  .steps { counter-reset: step; padding-left: 0; list-style: none; }
+  .steps li {
+    counter-increment: step;
+    margin-bottom: 8px;
+    padding-left: 32px;
+    position: relative;
+  }
+  .steps li::before {
+    content: counter(step);
+    position: absolute;
+    left: 0;
+    width: 22px; height: 22px;
+    background: var(--accent);
+    color: var(--bg);
+    border-radius: 50%;
+    text-align: center;
+    font-size: 0.78em;
+    line-height: 22px;
+    font-weight: 700;
+  }
+  .highlight { color: var(--green); font-weight: 600; }
+  .section-icon { margin-right: 6px; }
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1><span class="emoji">🃏</span> Short Deck LLM Duel Engine / 短牌德州 LLM 对战引擎</h1>
+
+<blockquote>
+  <strong>让两个大语言模型坐上牌桌，打一场短牌德州扑克。</strong><br>
+  Pit two LLMs against each other in Short Deck (6+) Hold'em — with live AI commentary.
+</blockquote>
+
+<div class="badge-row">
+  <span class="badge badge-blue">Python 3.12+</span>
+  <span class="badge badge-green">PySide6 GUI</span>
+  <span class="badge badge-yellow">MIT License</span>
+</div>
+
+<hr>
+
+<h2><span class="section-icon">📖</span>What is this? / 这是什么？</h2>
+
+<p>一个桌面 GUI 应用，让两个 LLM（大语言模型）以 AI 玩家身份进行 <strong>短牌德州扑克 (Short Deck / 6+ Hold'em)</strong> 单挑对战。支持第三个 LLM 担任实时解说员，像电竞赛事一样播报牌局。</p>
+
+<p>A desktop application where two LLMs play <strong>Short Deck Texas Hold'em</strong> heads-up against each other, with an optional third LLM providing live match commentary.</p>
+
+<h3>Key Features / 核心特性</h3>
+
+<table>
+  <thead>
+    <tr><th>特性 Feature</th><th>说明 Description</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>🤖 <strong>双 AI 对战</strong></td><td>任意两个 OpenAI 兼容 API 的模型互相对决 — Any two OpenAI-compatible LLMs battle</td></tr>
+    <tr><td>🎙️ <strong>实时解说</strong></td><td>第三个 LLM 担任解说员，分析策略与心理博弈 — A third LLM provides live commentary</td></tr>
+    <tr><td>💭 <strong>选手心理活动</strong></td><td>每手牌后 AI 发表内心独白与赛后感言 — Post-hand emotions &amp; match-end reflections</td></tr>
+    <tr><td>🗣️ <strong>垃圾话</strong></td><td>AI 之间互相喊话施压 — AIs taunt and bluff each other</td></tr>
+    <tr><td>▶️ <strong>手动/自动</strong></td><td>全自动对局或逐步手动操作 — Full auto-play or step-by-step manual control</td></tr>
+    <tr><td>🎯 <strong>指定牌面</strong></td><td>手动指定任意底牌和公共牌 — Override any hole/community cards</td></tr>
+    <tr><td>🧠 <strong>深度思考</strong></td><td>支持 reasoning/thinking 模型 — Extended thinking for reasoning models</td></tr>
+    <tr><td>📝 <strong>手牌记忆</strong></td><td>AI 记住本手牌内的历史决策 — In-hand decision memory</td></tr>
+    <tr><td>🃏 <strong>完整短牌规则</strong></td><td>36 张牌、同花 &gt; 葫芦、A-6-7-8-9 — 36 cards, Flush &gt; Full House</td></tr>
+    <tr><td>🖥️ <strong>可视化牌桌</strong></td><td>绿色牌桌风格 UI，实时显示手牌/筹码/底池 — Green felt UI with live updates</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2><span class="section-icon">🚀</span>Quick Start / 快速开始</h2>
+
+<h3>Prerequisites / 前置条件</h3>
+<ul>
+  <li><strong>Python 3.12+</strong></li>
+  <li><strong><a href="https://docs.astral.sh/uv/">uv</a></strong> — 推荐的 Python 包管理器</li>
+  <li>至少一个 <strong>OpenAI 兼容 API</strong>（DeepSeek / 豆包 / OpenAI / Gemini via proxy 等）</li>
+</ul>
+
+<h3>1. Clone &amp; Install / 克隆与安装</h3>
+<pre><code>git clone https://github.com/usermbzlj/ai-shortdeck-poker.git
+cd ai-shortdeck-poker
+
+<span class="comment"># 使用 uv 创建虚拟环境并安装依赖</span>
+uv sync</code></pre>
+
+<h3>2. Configure / 配置</h3>
+<pre><code>cp .env.example .env
+<span class="comment"># 编辑 .env，填入你的 API 密钥</span></code></pre>
+
+<pre><code><span class="comment"># AI 选手 A / Player A</span>
+A_NAME=DeepSeek
+A_BASE_URL=https://api.deepseek.com/v1
+A_API_KEY=sk-your-key-here
+A_MODEL=deepseek-chat
+
+<span class="comment"># AI 选手 B / Player B</span>
+B_NAME=Gemini
+B_BASE_URL=https://your-api-proxy.com/v1
+B_API_KEY=sk-your-key-here
+B_MODEL=gemini-2.5-flash
+
+<span class="comment"># 解说员（可选）/ Commentator (optional)</span>
+COMMENTATOR_BASE_URL=https://api.deepseek.com/v1
+COMMENTATOR_API_KEY=sk-your-key-here
+COMMENTATOR_MODEL=deepseek-chat</code></pre>
+
+<h3>3. Test API / 测试连通性</h3>
+<pre><code>uv run python test_api.py</code></pre>
+
+<h3>4. Run / 启动</h3>
+<pre><code>uv run python main.py</code></pre>
+
+<hr>
+
+<h2><span class="section-icon">🎮</span>How to Play / 怎么玩</h2>
+
+<h3>全自动模式 / Full Auto Mode</h3>
+<ol class="steps">
+  <li>配好 <code>.env</code> 后启动程序</li>
+  <li>点击 <strong>「开始新比赛」</strong></li>
+  <li>点击 <strong>「▶ 开始自动对局」</strong></li>
+  <li>坐下来看两个 AI 互相厮杀 🍿</li>
+</ol>
+
+<h3>手动模式 / Manual Mode</h3>
+<ol class="steps">
+  <li>点击 <strong>「开始新比赛」</strong> → <strong>「开始下一手」</strong></li>
+  <li>（可选）手动指定底牌/公共牌</li>
+  <li>点击 <strong>「随机补齐缺牌」</strong> 发牌</li>
+  <li>用手动操作按钮替 AI 做决策</li>
+  <li>每轮行动结束后点 <strong>「发下一轮公共牌」</strong> 或 <strong>「摊牌结算」</strong></li>
+</ol>
+
+<hr>
+
+<h2><span class="section-icon">📁</span>Architecture / 项目结构</h2>
+
+<div class="tree">
+  shortdeck-llm-duel/<br>
+  ├── <span class="file">main.py</span> <span class="desc">— GUI 入口：PySide6 界面（牌桌、控件、日志）</span><br>
+  ├── <span class="file">controller.py</span> <span class="desc">— 游戏控制器：AI 决策调度、解说员、状态管理</span><br>
+  ├── <span class="file">core.py</span> <span class="desc">— 游戏引擎：短牌规则、手牌评估、LLM 客户端</span><br>
+  ├── <span class="file">prompts.py</span> <span class="desc">— Prompt 模板：AI 玩家 &amp; 解说员提示词</span><br>
+  ├── <span class="file">test_api.py</span> <span class="desc">— API 连通性测试脚本</span><br>
+  ├── <span class="file">pyproject.toml</span> <span class="desc">— 项目依赖配置 (uv)</span><br>
+  ├── <span class="file">.env.example</span> <span class="desc">— 配置模板（安全，不含密钥）</span><br>
+  ├── <span class="file">.env</span> <span class="desc">— 实际配置（含密钥，不上传 Git）</span><br>
+  └── <span class="file">.gitignore</span> <span class="desc">— Git 忽略规则</span>
+</div>
+
+<h3>模块职责 / Module Responsibilities</h3>
+<table>
+  <thead>
+    <tr><th>文件 File</th><th>行数 LoC</th><th>职责 Role</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>core.py</code></td><td>~890</td><td>游戏引擎核心：36 张短牌、发牌、下注逻辑、手牌评估（7 选 5 最优组合）、LLM HTTP 客户端</td></tr>
+    <tr><td><code>controller.py</code></td><td>~1070</td><td>控制器：构建 Prompt、异步调用 LLM、解析 AI 决策、驱动解说员、自动对局状态机</td></tr>
+    <tr><td><code>main.py</code></td><td>~990</td><td>PySide6 GUI：牌桌可视化、设置面板、手动/自动控制、.env 读写</td></tr>
+    <tr><td><code>prompts.py</code></td><td>~166</td><td>所有 Prompt 模板：AI 玩家 System/User Prompt、解说员 Prompt、心理活动 Prompt</td></tr>
+    <tr><td><code>test_api.py</code></td><td>~150</td><td>API 连通性测试：逐一测试所有配置的 LLM endpoint</td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2><span class="section-icon">⚙️</span>Configuration / 配置项说明</h2>
+
+<h3>AI 选手配置 / AI Player Config</h3>
+<table>
+  <thead>
+    <tr><th>变量</th><th>说明</th><th>示例</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>A_NAME</code> / <code>B_NAME</code></td><td>显示名称 / Display name</td><td><code>DeepSeek</code></td></tr>
+    <tr><td><code>A_BASE_URL</code> / <code>B_BASE_URL</code></td><td>API 地址 / Endpoint</td><td><code>https://api.deepseek.com/v1</code></td></tr>
+    <tr><td><code>A_API_KEY</code> / <code>B_API_KEY</code></td><td>API 密钥 / Key</td><td><code>sk-xxx</code></td></tr>
+    <tr><td><code>A_MODEL</code> / <code>B_MODEL</code></td><td>模型名 / Model</td><td><code>deepseek-chat</code></td></tr>
+    <tr><td><code>A_TEMPERATURE</code></td><td>温度（留空用全局，<code>none</code>=不发送）</td><td><code>0.2</code></td></tr>
+    <tr><td><code>A_THINKING_ENABLED</code></td><td>深度思考 / Thinking mode</td><td><code>true</code> / <code>false</code></td></tr>
+    <tr><td><code>A_THINKING_BUDGET</code></td><td>思考 Token 上限</td><td><code>8000</code></td></tr>
+    <tr><td><code>A_MEMORY_ENABLED</code></td><td>手牌内记忆 / In-hand memory</td><td><code>true</code></td></tr>
+  </tbody>
+</table>
+
+<h3>解说员配置 / Commentator Config</h3>
+<table>
+  <thead>
+    <tr><th>变量</th><th>说明</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>COMMENTATOR_BASE_URL</code></td><td>API 地址</td></tr>
+    <tr><td><code>COMMENTATOR_API_KEY</code></td><td>API 密钥</td></tr>
+    <tr><td><code>COMMENTATOR_MODEL</code></td><td>模型名</td></tr>
+    <tr><td><code>COMMENTATOR_TEMPERATURE</code></td><td>温度（默认 0.7）</td></tr>
+    <tr><td><code>COMMENTATOR_ON_ACTION</code></td><td>每个动作后解说</td></tr>
+    <tr><td><code>COMMENTATOR_ON_STREET</code></td><td>每街结束后解说</td></tr>
+    <tr><td><code>COMMENTATOR_ON_HAND</code></td><td>每手结束后解说</td></tr>
+    <tr><td><code>COMMENTATOR_GOD_VIEW</code></td><td>上帝视角（看双方底牌）</td></tr>
+  </tbody>
+</table>
+
+<h3>通用配置 / General</h3>
+<table>
+  <thead>
+    <tr><th>变量</th><th>说明</th><th>默认</th></tr>
+  </thead>
+  <tbody>
+    <tr><td><code>TEMPERATURE</code></td><td>全局默认温度</td><td><code>0.2</code></td></tr>
+    <tr><td><code>DEFAULT_STACK</code></td><td>初始筹码 (USD)</td><td><code>1000.00</code></td></tr>
+    <tr><td><code>DEFAULT_SB</code></td><td>小盲注 (USD)</td><td><code>2.50</code></td></tr>
+    <tr><td><code>DEFAULT_BB</code></td><td>大盲注 (USD)</td><td><code>5.00</code></td></tr>
+    <tr><td><code>DEBUG_LOG_ENABLED</code></td><td>Debug 日志</td><td><code>false</code></td></tr>
+  </tbody>
+</table>
+
+<hr>
+
+<h2><span class="section-icon">🃏</span>Short Deck Rules / 短牌规则简介</h2>
+
+<p>短牌德州 (6+ Hold'em) 与标准德州的关键差异：</p>
+<ul>
+  <li><strong>36 张牌</strong>：移除所有 2-5，最小面值为 6 — 36 cards, no 2-5</li>
+  <li><strong>牌型排名不同</strong>：同花 (Flush) <span class="highlight">强于</span> 葫芦 (Full House)</li>
+  <li><strong>最小顺子</strong>：A-6-7-8-9（A 可作最低牌）</li>
+  <li><strong>更多 action</strong>：起手牌牌力更接近，弃牌 EV 损失更大</li>
+</ul>
+
+<hr>
+
+<h2><span class="section-icon">🛠️</span>Tech Stack / 技术栈</h2>
+<ul>
+  <li><strong>Python 3.12+</strong> — 主语言</li>
+  <li><strong>PySide6</strong> — 桌面 GUI 框架（Qt for Python）</li>
+  <li><strong>httpx</strong> — HTTP 客户端（调用 LLM API）</li>
+  <li><strong>uv</strong> — 包管理与虚拟环境</li>
+</ul>
+
+<hr>
+
+<h2><span class="section-icon">❓</span>FAQ</h2>
+
+<p class="faq-q">Q: 支持哪些 LLM？/ Which LLMs are supported?</p>
+<p class="faq-a">任何提供 OpenAI 兼容 Chat Completions API 的模型都可以。已测试：DeepSeek、豆包 (Doubao)、Gemini (via proxy)、OpenAI GPT 系列、GLM 等。</p>
+
+<p class="faq-q">Q: AI 选手 A 和 B 可以用不同的模型吗？</p>
+<p class="faq-a">当然！这正是核心玩法 —— 让不同模型互相对决，看谁扑克水平更高。Absolutely — that's the whole point!</p>
+
+<p class="faq-q">Q: 解说员必须配置吗？</p>
+<p class="faq-a">不是，完全可选。不配置时解说席为空，对局功能不受影响。</p>
+
+<p class="faq-q">Q: 为什么选短牌而不是标准德州？</p>
+<p class="faq-a">36 张牌使牌力更接近，AI 需要更多博弈思考而非简单弃牌，对话和决策更有趣。</p>
+
+<hr>
+
+<h2><span class="section-icon">📄</span>License</h2>
+<p>MIT License.</p>
+
+<h2><span class="section-icon">🤝</span>Contributing / 贡献</h2>
+<p>欢迎 PR 和 Issue！如有任何问题或建议，请在 GitHub Issues 中提出。</p>
+
+</div>
+</body>
+</html>

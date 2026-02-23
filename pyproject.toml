@@ -1,0 +1,8 @@
+[project]
+name = "shortdeck-llm-duel"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "httpx>=0.28.1",
+    "pyside6>=6.10.2",
+]
