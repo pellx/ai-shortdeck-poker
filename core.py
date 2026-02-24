@@ -597,9 +597,17 @@ class HandState:
         to_call = self.to_call_cents(p)
         stack = self.stacks[p]
 
-        # SB=BB 时 preflop SB 的 to_call 为 0，但 current_bet_cents > 0 且未行动过，
-        # 此时不能 check（规则上 SB 必须补齐或弃牌/加注）。
-        facing_bet = to_call > 0 or (self.current_bet_cents > 0 and not self.acted[p])
+        # 判断是否 facing_bet：
+        # 1. 如果需要补齐金额 (to_call > 0) → facing_bet
+        # 2. 如果不需要补齐，但有下注额且没行动过 → 只有当玩家投入 < 当前下注额时才算 facing_bet
+        if to_call > 0:
+            facing_bet = True
+        elif self.current_bet_cents > 0 and not self.acted[p]:
+            # 关键修复：只有当玩家投入少于当前下注额时，才需要 facing_bet
+            # 如果双方投入相等，即使没 acted 也可以 check
+            facing_bet = (self.contributed_street[p] < self.current_bet_cents)
+        else:
+            facing_bet = False
 
         actions: list[str] = []
         if facing_bet:
@@ -610,14 +618,12 @@ class HandState:
         max_to = self.contributed_street[p] + stack
 
         if stack > 0 and self.can_raise[p]:
-            if facing_bet:
-                # 只有当玩家最大可投入 > 当前下注额时才能 raise
+            if self.current_bet_cents > 0:
                 if max_to > self.current_bet_cents:
                     actions.append("raise")
             else:
                 actions.append("bet")
 
-        # to_call 可能因 SB=BB 而为 0，但真实需补齐金额要用 current_bet_cents 体现
         effective_to_call = max(to_call, self.current_bet_cents - self.contributed_street[p]) if facing_bet else 0
         effective_to_call = max(0, effective_to_call)
 
@@ -627,6 +633,8 @@ class HandState:
         suggested_to = None
         if facing_bet:
             suggested_to = self.current_bet_cents
+        elif "raise" in actions:
+            suggested_to = min_raise_to
         elif "bet" in actions:
             suggested_to = min_bet_to
 
