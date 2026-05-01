@@ -2,15 +2,22 @@ import logging
 import os
 import sys
 
+
+def _reconfigure_stream_utf8(stream: object) -> None:
+    reconfigure = getattr(stream, "reconfigure", None)
+    if callable(reconfigure):
+        reconfigure(encoding="utf-8", errors="replace")
+
+
 # Windows 下强制 stdout/stderr 使用 UTF-8，避免 emoji 和中文导致编码崩溃
 if sys.platform == "win32":
-    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-    sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    _reconfigure_stream_utf8(sys.stdout)
+    _reconfigure_stream_utf8(sys.stderr)
 
 from PySide6 import QtCore, QtGui, QtWidgets
 
 import core
-from controller import GameController, AppViewModel
+from controller import AppViewModel, GameController, PlayerID
 
 log = logging.getLogger("poker.ui")
 
@@ -172,7 +179,7 @@ class BoardPanel(QtWidgets.QFrame):
         self.lbl_hand.setText(f"Hand #{vm.hand_id}")
 
     @staticmethod
-    def _update_player(row: dict, pid: str, name: str, vm: AppViewModel) -> None:
+    def _update_player(row: dict, pid: PlayerID, name: str, vm: AppViewModel) -> None:
         t = "background:transparent;"
         row["name"].setText(name)
 
