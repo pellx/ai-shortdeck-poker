@@ -1,90 +1,106 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
+import ThreeScene from './ThreeScene.jsx'
+import {
+  createDeck, shuffle, evaluateHand, compareHands,
+  getHoleCardStrength, pickThinkType, SUIT_COLORS,
+} from './poker-engine.js'
 
-/* ===== 短牌工具 ===== */
-const SUITS = ['♠', '♥', '♣', '♦']
-const RANKS = ['6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A']
-const SUIT_COLORS = { '♠': '#a0a0a0', '♣': '#a0a0a0', '♥': '#ff6b7a', '♦': '#ff6b7a' }
-const createDeck = () => { const d = []; for (const s of SUITS) for (const r of RANKS) d.push({ suit: s, rank: r }); return d }
-const shuffle = (d) => { const a = [...d]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]] } return a }
-
-/* ===== 图片 ===== */
-const img = (f) => new URL(`./assets/charB/${f}`, import.meta.url).href
-const FACES = {
-  idle:      img('304f04ee-2c0c-4f3b-9301-d2b44b0828ce.png'),
-  thinking:  img('a72fc4d8-14e6-47b2-892d-91946f015661.png'),
-  analyzing: img('6d069dfb-b74f-4398-ad48-9adaae0fb416.png'),
-  confident: img('af875a72-99a0-4de8-9839-7d691106e512.png'),
-  winning:   img('ed8861bf-01df-45d6-b783-ec6dd9a7a398.png'),
-  sad:       img('104b5b6e-ecb5-4360-84c4-d23c39f85061.png'),
-  shocked:   img('f547096b-ff0f-444a-9903-207bc482b1eb.png'),
-}
-
-/* ===== 思考类型（模拟后端数据） ===== */
+/* ===== 思考类型 ===== */
 const THINK_TYPES = {
-  analyze:   { label: '深度分析',  expr: 'analyzing', texts: ['对手前几局都很激进...这次我要谨慎一点','他好像没什么筹码了...但万一他有底牌呢？','公共牌面很湿，很多听牌，要小心'] },
-  confident: { label: '自信满满',  expr: 'confident', texts: ['A-K同花！这手牌可以强势加注','两对！现在手牌很强，要保护底池','我中了坚果同花！无敌了！'] },
-  hesitate:  { label: '犹豫不决',  expr: 'thinking',  texts: ['没中牌...但对手过牌了，可以偷一下','转牌没中，但赔率还够，再看一张','要不要在这里诈唬...'] },
-  panic:     { label: '被逼绝境',  expr: 'shocked',   texts: ['全下！没有退路了！','ALL IN...只能赌一把了','牌面太恐怖了...但他可能也在偷'] },
-  sad:       { label: '沮丧无奈',  expr: 'sad',       texts: ['这手牌没法打了...弃牌','又被读透了...','苦牙西...'] },
-  happy:     { label: '得意洋洋',  expr: 'winning',   texts: ['底池全部收下~','ふふん♪','对手完全在我的计算之中'] },
-  normal:    { label: '冷静观察',  expr: 'idle',      texts: ['位置不利，但底池赔率很好，跟注看看','翻牌中了对子，继续价值下注','读牌读到这里了，相信自己的判断'] },
+  analyze:   { label: '深度分析',  expr: 'analyzing', texts: ['短牌里成牌率太高了，对手范围很宽...这次我要谨慎一点','公共牌面很湿，顺子听牌太多了，要小心','他在短牌里这么激进，范围可能是真强牌'] },
+  confident: { label: '自信满满',  expr: 'confident', texts: ['A-K同花！短牌里这手牌可以强势加注','两对！在短牌里已经很强了，要保护底池','我中了同花！短牌里同花比葫芦还大，无敌了！'] },
+  hesitate:  { label: '犹豫不决',  expr: 'thinking',  texts: ['没中牌...但短牌里诈唬成功率更高','转牌没中，但A可以当5，还有顺子听牌','要不要在这里偷一下...短牌节奏太快了'] },
+  panic:     { label: '被逼绝境',  expr: 'shocked',   texts: ['全下！短牌里不能怂！','ALL IN...36张牌运气成分很大，赌一把','他连续加注，但短牌里什么都有可能'] },
+  sad:       { label: '沮丧无奈',  expr: 'sad',       texts: ['这手牌在短牌里也打不了...弃牌','又被读透了...短牌运气太差','苦牙西...'] },
+  happy:     { label: '得意洋洋',  expr: 'winning',   texts: ['底池全部收下~','ふふん♪','对手完全在我的计算之中，短牌也一样'] },
+  normal:    { label: '冷静观察',  expr: 'idle',      texts: ['位置不利，但短牌底池赔率很好，跟注看看','翻牌中了对子，短牌里对子很强了','相信自己的读牌'] },
 }
-const TYPE_KEYS = Object.keys(THINK_TYPES)
-const ACTIONS = [
-  { name: '弃牌', expr: 'sad',     chips: 0 },
-  { name: '跟注', expr: 'idle',    chips: 40 },
-  { name: '加注', expr: 'confident', chips: 120 },
-  { name: '全下', expr: 'shocked', chips: 'all' },
-]
 
-/* ===== 主组件 ===== */
+/* ===== 开场放话 ===== */
+const INTRO_LINES = {
+  left:  ['今晚的底池我全包了。', '短牌才是我的主场。', '准备好输光筹码了吗？', '36张牌，我看你怎么赢。'],
+  right: ['话别说太早，短牌里运气才是一切。', '我会让你后悔坐上这张桌子。', '来吧，36张牌决胜负。', '别得意，短牌反转多的是。'],
+}
+
+/* ===== 赛后感想 ===== */
+const POST_GAME = {
+  winner: ['底池全部收下~', '短牌就是要有这种魄力。', 'ふふん♪ 太简单了。', '下一个。', '实力，不需要解释。'],
+  loser:  ['又被读透了...', '短牌运气成分太大了...', '苦牙西...', '下一局我一定赢回来。', '刚才那把牌...不甘心。'],
+}
+
+/* ===== 动作定义 ===== */
+const ACTIONS = {
+  fold:   { name: '弃牌', expr: 'sad' },
+  check:  { name: '过牌', expr: 'idle' },
+  call:   { name: '跟注', expr: 'idle' },
+  raise:  { name: '加注', expr: 'confident' },
+  allin:  { name: '全下', expr: 'shocked' },
+}
+
+const ANTE = 20
+const START_CHIPS = 2000
+
+/* ============================================
+   主组件
+   ============================================ */
 function App() {
   const [phase, setPhase]       = useState('idle')
-  const [round, setRound]       = useState('preflop')
-  const [focus, setFocus]       = useState(null)
-  const [animPhase, setAnimPhase] = useState('idle') // 'idle' | 'exit' | 'enter'
-  const [leftFace, setLeftFace] = useState('idle')
-  const [rightFace,setRightFace]= useState('idle')
-  const [leftThink, setLeftThink]   = useState(null)
-  const [rightThink,setRightThink]  = useState(null)
+  const [turn, setTurn]         = useState(null)
   const [speaker, setSpeaker]   = useState('')
   const [typed, setTyped]       = useState('')
-  const [cursorOn, setCursorOn] = useState(false)
-  const [leftChips, setLeftChips]   = useState(2000)
-  const [rightChips,setRightChips]  = useState(2000)
+  const [leftChips, setLeftChips]   = useState(START_CHIPS)
+  const [rightChips,setRightChips]  = useState(START_CHIPS)
   const [pot, setPot]           = useState(0)
   const [comm, setComm]         = useState([])
   const [showdown,setShowdown]  = useState(false)
-  const [log, setLog]           = useState([])
+  const [result, setResult]     = useState(null)
+  const [buttonPos, setButtonPos]   = useState('left')
+  const [gameCount, setGameCount]   = useState(0)
 
   const deckRef   = useRef([])
-  const chipsRef  = useRef({ left: 2000, right: 2000 })
+  const leftHand  = useRef([])
+  const rightHand = useRef([])
   const timers    = useRef([])
+  const aborted   = useRef(false)
+  const currentPot = useRef(0)
+  const leftChipsRef  = useRef(START_CHIPS)
+  const rightChipsRef = useRef(START_CHIPS)
 
-  useEffect(() => { chipsRef.current.left  = leftChips }, [leftChips])
-  useEffect(() => { chipsRef.current.right = rightChips }, [rightChips])
+  useEffect(() => { leftChipsRef.current = leftChips }, [leftChips])
+  useEffect(() => { rightChipsRef.current = rightChips }, [rightChips])
+  useEffect(() => { currentPot.current = pot }, [pot])
 
-  const clearAll = useCallback(() => { timers.current.forEach(t => clearTimeout(t)); timers.current = [] }, [])
-  const after = useCallback((fn, ms) => { const t = setTimeout(fn, ms); timers.current.push(t) }, [])
+  const clearTimers = useCallback(() => { timers.current.forEach(t => clearTimeout(t)); timers.current = [] }, [])
+  const wait = useCallback((ms) => new Promise((resolve) => {
+    if (aborted.current) { resolve(); return }
+    const t = setTimeout(resolve, ms)
+    timers.current.push(t)
+  }), [])
+  const checkAbort = () => { if (aborted.current) throw new Error('aborted') }
 
-  /* 打字机 */
-  const typeText = useCallback((text, done) => {
-    setTyped(''); setCursorOn(true)
-    let i = 0
-    const step = () => {
-      i++; setTyped(text.slice(0, i))
-      if (i < text.length) after(step, 30)
-      else if (done) after(done, 600)
+  const typeText = useCallback(async (text) => {
+    // 广播语音事件（零侵入，TTSEngine 独立监听）
+    if (speaker && text) {
+      window.dispatchEvent(new CustomEvent('ttsSpeak', { detail: { text, speaker } }))
     }
-    after(step, 100)
-  }, [after])
+    setTyped('')
+    for (let i = 0; i <= text.length; i++) {
+      checkAbort()
+      setTyped(text.slice(0, i))
+      await wait(30)
+    }
+    await wait(600)
+  }, [wait, speaker])
 
-  const pickThink = () => {
-    const key = TYPE_KEYS[Math.floor(Math.random() * TYPE_KEYS.length)]
-    const type = THINK_TYPES[key]
-    const text = type.texts[Math.floor(Math.random() * type.texts.length)]
-    return { key, ...type, text }
+  const moveChips = (side, amount) => {
+    if (amount <= 0) return
+    if (side === 'left') {
+      setLeftChips(c => Math.max(0, c - amount))
+    } else {
+      setRightChips(c => Math.max(0, c - amount))
+    }
+    setPot(p => p + amount)
   }
 
   const triggerImpact = useCallback(() => {
@@ -92,194 +108,402 @@ function App() {
     if (root) { root.classList.add('shake'); setTimeout(() => root.classList.remove('shake'), 500) }
   }, [])
 
-  /* 核心流程：资金条 exit → 位置更新 → enter → 思考 */
-  const thinkTurn = useCallback((side, rnd) => {
-    // 阶段 1：资金条向边缘移出
-    setAnimPhase('exit')
-
-    after(() => {
-      // 阶段 2：更新 focus，资金条获得新位置（此时 opacity=0）
-      setFocus(side)
-      setAnimPhase('enter')
-
-      after(() => {
-        // 阶段 3：资金条从另一侧进入完成，开始思考
-        setAnimPhase('idle')
-
-        setPhase('thinking')
-        const think = pickThink()
-
-        if (side === 'left') {
-          setLeftFace(think.expr)
-          setRightFace('idle')
-          setLeftThink(think)
-          setRightThink(null)
-          setSpeaker('AI-A')
-        } else {
-          setRightFace(think.expr)
-          setLeftFace('idle')
-          setRightThink(think)
-          setLeftThink(null)
-          setSpeaker('AI-B')
-        }
-        typeText(think.text, () => actTurn(side))
-      }, 500)
-    }, 400)
-  }, [after, typeText])
-
-  const actTurn = useCallback((side) => {
-    setPhase('acting')
-    triggerImpact()
-    const act = ACTIONS[Math.floor(Math.random() * ACTIONS.length)]
-    const current = side === 'left' ? chipsRef.current.left : chipsRef.current.right
-    const amt = act.chips === 'all' ? current : Math.min(act.chips, current)
-
-    if (side === 'left') {
-      setLeftFace(act.expr)
-      if (amt > 0) { setLeftChips(c => c - amt); setPot(p => p + amt) }
-    } else {
-      setRightFace(act.expr)
-      if (amt > 0) { setRightChips(c => c - amt); setPot(p => p + amt) }
+  const decideAction = (side, strength, toCall) => {
+    const chips = side === 'left' ? leftChipsRef.current : rightChipsRef.current
+    if (toCall >= chips) {
+      if (strength < 45) return Math.random() > 0.4 ? 'fold' : 'call'
+      return 'call'
     }
-    setLog(l => [...l.slice(-4), `${side === 'left' ? 'AI-A' : 'AI-B'} ${act.name}${amt > 0 ? ` $${amt}` : ''}`])
-    after(() => advance(side), 1400)
-  }, [triggerImpact, after])
-
-  const advance = useCallback((last) => {
-    const next = last === 'left' ? 'right' : 'left'
-    const rounds = ['preflop', 'flop', 'turn', 'river']
-    const idx = rounds.indexOf(round)
-
-    if (next === 'left') {
-      if (idx < 3) {
-        const nr = rounds[idx + 1]
-        setRound(nr); setPhase('community'); setFocus(null)
-        setLeftFace('idle'); setRightFace('idle')
-        setLeftThink(null); setRightThink(null)
-        setSpeaker(''); setTyped('')
-        const cnt = nr === 'flop' ? 3 : 1
-        const cards = []; for (let i = 0; i < cnt; i++) cards.push(deckRef.current.pop())
-        after(() => { setComm(p => [...p, ...cards]); thinkTurn('left', nr) }, 1600)
-      } else {
-        setPhase('showdown'); setFocus(null)
-        setLeftFace('confident'); setRightFace('confident')
-        setShowdown(true); setSpeaker('系统')
-        typeText('摊牌！双方亮出手牌', null)
-      }
-    } else {
-      thinkTurn(next, round)
+    if (strength >= 80) {
+      const r = Math.random()
+      if (r < 0.35) return 'allin'
+      if (r < 0.75) return 'raise'
+      return 'call'
     }
-  }, [round, thinkTurn, typeText, after])
-
-  const startGame = useCallback(() => {
-    clearAll()
-    const deck = shuffle(createDeck()); deckRef.current = deck
-    setComm([]); setPot(40); setShowdown(false); setLog([])
-    setLeftChips(1980); setRightChips(1980); setRound('preflop')
-    setPhase('dealing'); setFocus(null); setAnimPhase('idle')
-    setLeftFace('idle'); setRightFace('idle')
-    setLeftThink(null); setRightThink(null)
-    setSpeaker(''); setTyped('')
-    after(() => thinkTurn('left', 'preflop'), 2000)
-  }, [clearAll, after, thinkTurn])
-
-  const restart = () => {
-    clearAll(); setPhase('idle'); setRound('preflop'); setFocus(null); setAnimPhase('idle')
-    setLeftFace('idle'); setRightFace('idle'); setLeftThink(null); setRightThink(null)
-    setSpeaker(''); setTyped(''); setLeftChips(2000); setRightChips(2000)
-    setPot(0); setComm([]); setShowdown(false); setLog([])
+    if (strength >= 58) {
+      const r = Math.random()
+      if (r < 0.12) return 'allin'
+      if (r < 0.45) return 'raise'
+      if (r < 0.88) return 'call'
+      return Math.random() > 0.5 ? 'check' : 'fold'
+    }
+    if (strength >= 38) {
+      const r = Math.random()
+      if (r < 0.08) return 'raise'
+      if (r < 0.55) return 'call'
+      if (r < 0.75) return 'check'
+      return 'fold'
+    }
+    const r = Math.random()
+    if (r < 0.25) return 'call'
+    if (r < 0.4) return 'raise'
+    if (r < 0.6) return 'check'
+    return 'fold'
   }
 
-  useEffect(() => {
-    if (phase !== 'thinking') return
-    const t = setInterval(() => setCursorOn(c => !c), 480)
-    return () => clearInterval(t)
-  }, [phase])
-  useEffect(() => () => clearAll(), [clearAll])
+  const evaluateCurrent = (side) => {
+    const hand = side === 'left' ? leftHand.current : rightHand.current
+    if (comm.length === 0) {
+      return getHoleCardStrength(hand)
+    }
+    const best = evaluateHand(hand, comm)
+    const base = best.rank * 8
+    const bonus = best.tiebreaker[0] || 0
+    return Math.min(100, base + bonus * 0.3)
+  }
 
-  /* ===== 渲染 ===== */
-  const focusClass = focus === 'left' ? 'focus-left' : focus === 'right' ? 'focus-right' : ''
-  const animClass = animPhase ? `anim-${animPhase}` : ''
+  /* ============================================
+     流程控制
+     ============================================ */
 
-  const MiniCard = ({ card, hidden }) => (
-    <div className={`mcard ${hidden ? 'mhidden' : ''}`}>
-      {hidden ? <div className="mback" /> : <>
-        <span style={{ color: SUIT_COLORS[card.suit], fontSize: 13, fontWeight: 700 }}>{card.rank}</span>
-        <span style={{ color: SUIT_COLORS[card.suit], fontSize: 16 }}>{card.suit}</span>
-      </>}
-    </div>
-  )
+  const runIntro = async () => {
+    setPhase('intro')
+    setSpeaker('AI-A')
+    const aLine = INTRO_LINES.left[gameCount % INTRO_LINES.left.length]
+    await typeText(aLine)
+    checkAbort()
+    await wait(400)
 
+    setSpeaker('AI-B')
+    const bLine = INTRO_LINES.right[gameCount % INTRO_LINES.right.length]
+    await typeText(bLine)
+    checkAbort()
+    await wait(400)
+
+    setSpeaker('')
+    setTyped('')
+  }
+
+  const runAnte = async () => {
+    setPhase('ante')
+    setSpeaker('系统')
+    await typeText('请投入前注...')
+    checkAbort()
+
+    moveChips('left', ANTE)
+    moveChips('right', ANTE)
+    const bigAnteSide = buttonPos
+    moveChips(bigAnteSide, ANTE)
+
+    setSpeaker('')
+    setTyped('')
+    await wait(800)
+  }
+
+  const runDeal = async () => {
+    setPhase('dealing')
+    setSpeaker('系统')
+    await typeText('发牌...')
+    checkAbort()
+
+    leftHand.current = [deckRef.current.pop(), deckRef.current.pop()]
+    rightHand.current = [deckRef.current.pop(), deckRef.current.pop()]
+
+    await wait(600)
+    setSpeaker('')
+    setTyped('')
+  }
+
+  const runBettingRound = async (street) => {
+    setPhase('betting')
+
+    let leftBet = 0
+    let rightBet = 0
+    let currentBet = 0
+    let actingSide
+    if (street === 'preflop') {
+      actingSide = buttonPos === 'left' ? 'right' : 'left'
+    } else {
+      actingSide = buttonPos === 'left' ? 'left' : 'right'
+    }
+
+    const maxRounds = 6
+    for (let i = 0; i < maxRounds; i++) {
+      checkAbort()
+
+      const otherSide = actingSide === 'left' ? 'right' : 'left'
+      const toCall = currentBet - (actingSide === 'left' ? leftBet : rightBet)
+      const strength = evaluateCurrent(actingSide)
+
+      setTurn(actingSide)
+      await wait(700)
+
+      const thinkKey = pickThinkType(strength)
+      setSpeaker(actingSide === 'left' ? 'AI-A' : 'AI-B')
+      // eslint-disable-next-line react-hooks/purity
+      const thinkText = THINK_TYPES[thinkKey].texts[Math.floor(Math.random() * THINK_TYPES[thinkKey].texts.length)]
+      await typeText(thinkText)
+      checkAbort()
+
+      const action = toCall > 0 ? decideAction(actingSide, strength, toCall) : decideAction(actingSide, strength, 0)
+      const act = ACTIONS[action]
+
+      if (action === 'fold') {
+        await wait(600)
+        const winner = otherSide
+        setTurn(null)
+        await runFoldResult(winner)
+        return 'folded'
+      }
+
+      if (action === 'check') {
+        await wait(500)
+      }
+
+      if (action === 'call') {
+        const amt = Math.min(toCall, actingSide === 'left' ? leftChipsRef.current : rightChipsRef.current)
+        moveChips(actingSide, amt)
+        if (actingSide === 'left') leftBet += amt
+        else rightBet += amt
+        await wait(500)
+      }
+
+      if (action === 'raise') {
+        const raiseSize = Math.floor(currentPot.current * 0.5) + 40
+        const total = toCall + raiseSize
+        const amt = Math.min(total, actingSide === 'left' ? leftChipsRef.current : rightChipsRef.current)
+        const actualRaise = amt - (actingSide === 'left' ? leftBet : rightBet)
+        if (actualRaise > 0) {
+          moveChips(actingSide, actualRaise)
+          if (actingSide === 'left') leftBet += actualRaise
+          else rightBet += actualRaise
+          currentBet = Math.max(leftBet, rightBet)
+        }
+        triggerImpact()
+        await wait(700)
+      }
+
+      if (action === 'allin') {
+        const amt = actingSide === 'left' ? leftChipsRef.current : rightChipsRef.current
+        moveChips(actingSide, amt)
+        if (actingSide === 'left') leftBet += amt
+        else rightBet += amt
+        currentBet = Math.max(leftBet, rightBet)
+        triggerImpact()
+        await wait(900)
+      }
+
+      const otherToCall = currentBet - (otherSide === 'left' ? leftBet : rightBet)
+      if (otherToCall <= 0 && i > 0) {
+        break
+      }
+
+      actingSide = otherSide
+      setSpeaker('')
+      setTyped('')
+      await wait(300)
+    }
+
+    setTurn(null)
+    setSpeaker('')
+    setTyped('')
+    return 'continued'
+  }
+
+  const runCommunity = async (street) => {
+    setPhase('community')
+    setSpeaker('系统')
+
+    const label = street === 'flop' ? '翻牌' : street === 'turn' ? '转牌' : '河牌'
+    await typeText(`${label}...`)
+    checkAbort()
+
+    const count = street === 'flop' ? 3 : 1
+    const newCards = []
+    for (let i = 0; i < count; i++) {
+      newCards.push(deckRef.current.pop())
+    }
+
+    setComm(prev => [...prev, ...newCards])
+    await wait(800)
+
+    setSpeaker('')
+    setTyped('')
+    await wait(400)
+  }
+
+  const runFoldResult = async (winnerSide) => {
+    setPhase('showdown')
+    setTurn(null)
+
+    setSpeaker('系统')
+    await typeText(`${winnerSide === 'left' ? 'AI-A' : 'AI-B'} 获胜！对手弃牌。`)
+    checkAbort()
+
+    const winAmount = currentPot.current
+    if (winnerSide === 'left') {
+      setLeftChips(c => c + winAmount)
+    } else {
+      setRightChips(c => c + winAmount)
+    }
+    setPot(0)
+
+    await wait(600)
+    await runPostGame(winnerSide)
+  }
+
+  const runShowdown = async () => {
+    setPhase('showdown')
+    setShowdown(true)
+    setSpeaker('系统')
+    await typeText('摊牌！双方亮出手牌...')
+    checkAbort()
+    await wait(600)
+
+    const res = compareHands(leftHand.current, rightHand.current, comm)
+    setResult(res)
+
+    const leftName = res.leftBest.name
+    const rightName = res.rightBest.name
+    await typeText(`AI-A：${leftName}  vs  AI-B：${rightName}`)
+    checkAbort()
+    await wait(800)
+
+    if (res.winner === 'left') {
+      // AI-A 获胜
+    } else if (res.winner === 'right') {
+      // AI-B 获胜
+    } else {
+      // 平局
+    }
+
+    await wait(500)
+
+    if (res.winner === 'left') {
+      setLeftChips(c => c + currentPot.current)
+    } else if (res.winner === 'right') {
+      setRightChips(c => c + currentPot.current)
+    } else {
+      const half = Math.floor(currentPot.current / 2)
+      setLeftChips(c => c + half)
+      setRightChips(c => c + half)
+    }
+    setPot(0)
+    await wait(600)
+
+    if (res.leftBest.rank >= 8 || res.rightBest.rank >= 8) {
+      triggerImpact()
+      await wait(300)
+    }
+
+    await runPostGame(res.winner)
+  }
+
+  const runPostGame = async (winnerSide) => {
+    setPhase('result')
+    setTurn(null)
+
+    if (winnerSide && winnerSide !== 'tie') {
+      const loserSide = winnerSide === 'left' ? 'right' : 'left'
+      setSpeaker(winnerSide === 'left' ? 'AI-A' : 'AI-B')
+      const winLine = POST_GAME.winner[gameCount % POST_GAME.winner.length]
+      await typeText(winLine)
+      checkAbort()
+      await wait(400)
+
+      setSpeaker(loserSide === 'left' ? 'AI-A' : 'AI-B')
+      const loseLine = POST_GAME.loser[gameCount % POST_GAME.loser.length]
+      await typeText(loseLine)
+      checkAbort()
+      await wait(400)
+    } else {
+      setSpeaker('系统')
+      await typeText('双方势均力敌，平局！')
+      checkAbort()
+      await wait(400)
+    }
+
+    setSpeaker('')
+    setTyped('')
+    await wait(600)
+
+    window.dispatchEvent(new CustomEvent('roundEnd', {
+      detail: { winner: winnerSide, pot: currentPot.current }
+    }))
+  }
+
+  /* ============================================
+     主控：开始一局
+     ============================================ */
+  const startGame = useCallback(async () => {
+    aborted.current = false
+    clearTimers()
+
+    const deck = shuffle(createDeck())
+    deckRef.current = deck
+    leftHand.current = []
+    rightHand.current = []
+    setComm([])
+    setPot(0)
+    setShowdown(false)
+    setResult(null)
+    setTurn(null)
+    setSpeaker('')
+    setTyped('')
+    currentPot.current = 0
+
+    const newButton = gameCount % 2 === 0 ? 'left' : 'right'
+    setButtonPos(newButton)
+
+    try {
+      await runIntro()
+      checkAbort()
+      await runAnte()
+      checkAbort()
+      await runDeal()
+      checkAbort()
+
+      const preflopRes = await runBettingRound('preflop')
+      if (preflopRes === 'folded') return
+
+      await runCommunity('flop')
+      checkAbort()
+      const flopRes = await runBettingRound('flop')
+      if (flopRes === 'folded') return
+
+      await runCommunity('turn')
+      checkAbort()
+      const turnRes = await runBettingRound('turn')
+      if (turnRes === 'folded') return
+
+      await runCommunity('river')
+      checkAbort()
+      const riverRes = await runBettingRound('river')
+      if (riverRes === 'folded') return
+
+      await runShowdown()
+    } catch (e) {
+      if (e.message === 'aborted') return
+      throw e
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameCount])
+
+  const nextGame = useCallback(() => {
+    setGameCount(c => c + 1)
+    setTimeout(() => startGame(), 100)
+  }, [startGame])
+
+  useEffect(() => () => clearTimers(), [clearTimers])
+
+  /* ============================================
+     渲染 — 仅保留 3D 牌桌 + 开始按钮
+     ============================================ */
   return (
-    <div className={`battle-root ${focusClass} ${animClass}`}>
-      <div className="bg" />
-      <div className="bg-spot" />
+    <div className="battle-root">
+      <ThreeScene phase={phase} turn={turn} pot={pot} />
 
-      {/* 顶部 POT */}
-      <div className="pot-top">
-        <span className="pot-txt">POT</span>
-        <span className="pot-val">${pot}</span>
-      </div>
-
-      {/* ===== 角色立绘层 ===== */}
-      <div className="char-layer">
-        <div className="char char-a">
-          <img src={FACES[leftFace]} alt="AI-A" draggable={false} />
-        </div>
-        <div className="char char-b">
-          <img src={FACES[rightFace]} alt="AI-B" draggable={false} />
-        </div>
-      </div>
-
-      {/* ===== 资金条 - 跟随角色位置 ===== */}
-      <div className={`hp hp-a ${focus === 'left' ? 'hp-front' : 'hp-back'}`}>
-        <div className="hp-row">
-          <span className="hp-name">AI-A</span>
-          <span className="hp-num">${leftChips}</span>
-        </div>
-        <div className="hp-bar"><div className="hp-fill" style={{ width: `${Math.min(100, leftChips / 20)}%` }} /></div>
-        {leftThink && <div className="think-badge" style={{ borderColor: '#ff85a2', color: '#ff85a2' }}>{leftThink.label}</div>}
-      </div>
-
-      <div className={`hp hp-b ${focus === 'right' ? 'hp-front' : 'hp-back'}`}>
-        <div className="hp-row">
-          <span className="hp-name">AI-B</span>
-          <span className="hp-num">${rightChips}</span>
-        </div>
-        <div className="hp-bar"><div className="hp-fill" style={{ width: `${Math.min(100, rightChips / 20)}%` }} /></div>
-        {rightThink && <div className="think-badge" style={{ borderColor: '#66d9ff', color: '#66d9ff' }}>{rightThink.label}</div>}
-      </div>
-
-      {/* ===== 中间公共牌 ===== */}
-      <div className="comm-area">
-        <div className="comm-cards">
-          {[0,1,2,3,4].map(i => (
-            <div key={i} className={`cslot ${comm[i] ? 'cfill' : ''}`}>
-              {comm[i] ? <MiniCard card={comm[i]} hidden={false} /> : <div className="cplace" />}
-            </div>
-          ))}
-        </div>
-        <div className="mini-log">
-          {log.map((t, i) => <span key={i}>{t}</span>)}
-        </div>
-      </div>
-
-      {/* ===== 底部对话框 ===== */}
-      <div className="dialog-box">
-        <div className="dialog-main">
-          {speaker && (
-            <div className="dialog-spk" style={{ color: speaker === 'AI-A' ? '#ff85a2' : speaker === 'AI-B' ? '#66d9ff' : '#ffd700' }}>
-              {speaker}
-            </div>
-          )}
-          <div className="dialog-txt">
-            {typed}
-            {phase === 'thinking' && cursorOn && <span className="cursor">▋</span>}
-          </div>
-        </div>
-        {phase === 'idle' && <button className="btn" onClick={startGame}>▶ 开始对局</button>}
-        {phase === 'showdown' && <button className="btn" onClick={restart}>↻ 再来一局</button>}
-      </div>
+      {/* 极简开始按钮 */}
+      {phase === 'idle' && (
+        <button className="start-btn" onClick={startGame}>
+          开始对局
+        </button>
+      )}
+      {phase === 'result' && (
+        <button className="start-btn" onClick={nextGame}>
+          再来一局
+        </button>
+      )}
     </div>
   )
 }

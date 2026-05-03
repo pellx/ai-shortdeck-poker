@@ -188,11 +188,11 @@ function RankList({ isExpanded }) {
       {/* 第4-10名列表：展开时显示，收起时隐藏 */}
       <div
         style={{
-          maxHeight: isExpanded ? '200px' : '0px',
+          maxHeight: isExpanded ? '224px' : '0px',
           opacity: isExpanded ? 1 : 0,
           overflow: 'hidden',
           transition: 'max-height 0.4s ease, opacity 0.3s ease',
-          padding: isExpanded ? '6px 8px 4px' : '0 8px',
+          padding: '0 8px',
         }}
       >
         {rest.map((item, index) => {

@@ -65,7 +65,7 @@ function getAvatar(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=64&font-size=0.4&length=1`
 }
 
-function Danmu({ isExpanded, panelBg, divider }) {
+function Danmu({ isExpanded }) {
   const [messages, setMessages] = useState([])
   const [status, setStatus] = useState('')
   const idRef = useRef(0)
@@ -189,20 +189,7 @@ function Danmu({ isExpanded, panelBg, divider }) {
         `}</style>
       </div>
 
-      {/* 底部渐变遮罩 + 分隔线 */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          height: isExpanded ? '30px' : '0px',
-          background: `linear-gradient(to bottom, transparent 0%, ${panelBg} 100%)`,
-          borderBottom: `1px solid ${divider}`,
-          pointerEvents: 'none',
-          transition: 'height 0.4s ease',
-        }}
-      />
+
     </div>
   )
 }

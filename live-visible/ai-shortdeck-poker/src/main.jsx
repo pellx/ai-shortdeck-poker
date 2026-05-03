@@ -4,33 +4,104 @@ import './index.css'
 import App from './App.jsx'
 import Danmu from './danmuka.jsx'
 import RankList from './RankList.jsx'
+import TTSEngine from './TTSEngine.jsx'
 
 const PANEL_THEMES = {
   dark: {
     bg: 'rgba(18, 18, 26, 0.92)',
+    rankBg: 'rgba(10, 10, 16, 0.98)',
     border: '1px solid rgba(255,255,255,0.08)',
     divider: 'rgba(255,255,255,0.08)',
   },
   light: {
     bg: 'rgba(250, 248, 245, 0.92)',
+    rankBg: 'rgba(235, 232, 228, 0.98)',
     border: '1px solid rgba(0,0,0,0.06)',
     divider: 'rgba(0,0,0,0.08)',
   },
   blue: {
     bg: 'rgba(10, 25, 50, 0.92)',
+    rankBg: 'rgba(6, 16, 35, 0.98)',
     border: '1px solid rgba(100,180,255,0.15)',
     divider: 'rgba(100,180,255,0.2)',
   },
   purple: {
     bg: 'rgba(35, 15, 45, 0.92)',
+    rankBg: 'rgba(24, 10, 32, 0.98)',
     border: '1px solid rgba(200,120,255,0.12)',
     divider: 'rgba(200,120,255,0.18)',
   },
   green: {
     bg: 'rgba(20, 64, 27, 0.85)',
+    rankBg: 'rgba(14, 48, 22, 0.95)',
     border: '1px solid rgba(78,217,101,0.25)',
     divider: 'rgba(78,217,101,0.3)',
   },
+}
+
+/* ===== 项目已有的测试文本（用于 TTS 测试） ===== */
+const TEST_TEXTS = {
+  intro: [
+    '今晚的底池我全包了。', '短牌才是我的主场。', '准备好输光筹码了吗？', '36张牌，我看你怎么赢。',
+    '话别说太早，短牌里运气才是一切。', '我会让你后悔坐上这张桌子。', '来吧，36张牌决胜负。', '别得意，短牌反转多的是。',
+  ],
+  think: [
+    '短牌里成牌率太高了，对手范围很宽...这次我要谨慎一点',
+    'A-K同花！短牌里这手牌可以强势加注', '没中牌...但短牌里诈唬成功率更高',
+    '全下！短牌里不能怂！', '这手牌在短牌里也打不了...弃牌',
+    '底池全部收下~', '位置不利，但短牌底池赔率很好，跟注看看',
+  ],
+  system: [
+    '请投入前注...', '发牌...', '翻牌...', '转牌...', '河牌...',
+    '摊牌！双方亮出手牌...', 'AI-A 获胜！对手弃牌。', '双方势均力敌，平局！',
+  ],
+  danmu: [
+    '主播好强！', '666666', '前方高能', '全体起立', '这也太帅了吧',
+    '主播辛苦了', '蚌埠住了', '泪目', '火钳刘明', '这就是专业',
+  ],
+}
+
+function randomPick(arr) {
+  return arr[Math.floor(Math.random() * arr.length)]
+}
+
+function TTSButton({ label, speaker, category }) {
+  const [playing, setPlaying] = useState(false)
+
+  const handleClick = () => {
+    const text = randomPick(TEST_TEXTS[category] || TEST_TEXTS.intro)
+    setPlaying(true)
+    const audio = new Audio(`http://localhost:8000/tts/speak?text=${encodeURIComponent(text)}&speaker=${encodeURIComponent(speaker)}`)
+    audio.onended = () => setPlaying(false)
+    audio.onerror = () => setPlaying(false)
+    audio.play().catch(() => setPlaying(false))
+  }
+
+  return (
+    <button
+      onClick={handleClick}
+      disabled={playing}
+      style={{
+        padding: '6px 14px',
+        borderRadius: '20px',
+        border: '1px solid rgba(255,255,255,0.12)',
+        background: playing ? 'rgba(100,200,255,0.25)' : 'rgba(0,0,0,0.45)',
+        color: '#fff',
+        fontSize: '12px',
+        fontWeight: 600,
+        cursor: playing ? 'wait' : 'pointer',
+        opacity: playing ? 0.8 : 1,
+        fontFamily: '"Microsoft YaHei", sans-serif',
+        transition: 'all 0.2s',
+        whiteSpace: 'nowrap',
+        backdropFilter: 'blur(8px)',
+      }}
+      onMouseEnter={(e) => { if (!playing) e.target.style.background = 'rgba(0,0,0,0.6)' }}
+      onMouseLeave={(e) => { if (!playing) e.target.style.background = 'rgba(0,0,0,0.45)' }}
+    >
+      {playing ? '🔊 ...' : `🔊 ${label}`}
+    </button>
+  )
 }
 
 function LeftPanel() {
@@ -68,17 +139,24 @@ function LeftPanel() {
         WebkitBackdropFilter: 'blur(10px)',
         display: 'flex',
         flexDirection: 'column',
-        padding: '12px',
         boxSizing: 'border-box',
         gap: '0px',
         overflow: 'hidden',
       }}>
-        {/* 上 2/3：弹幕 */}
-        <div style={{ flex: 2, overflow: 'hidden', minHeight: 0 }}>
-          <Danmu isExpanded={isExpanded} panelBg={theme.bg} divider={theme.divider} />
+        {/* 弹幕区 */}
+        <div style={{ flex: 2, minHeight: 0, overflow: 'hidden', padding: '12px 12px 6px' }}>
+          <Danmu isExpanded={isExpanded} />
         </div>
-        {/* 下 1/3：排行榜 */}
-        <RankList isExpanded={isExpanded} />
+        {/* 排行榜：深色背景，宽度占满，底部贴边 */}
+        <div style={{
+          background: theme.rankBg,
+          borderRadius: '12px 12px 0 0',
+          overflow: 'hidden',
+        }}>
+          <RankList isExpanded={isExpanded} />
+        </div>
+
+
       </div>
     </div>
   )
@@ -97,6 +175,32 @@ createRoot(document.getElementById('root')).render(
         overflow: 'hidden',
       }}>
         <App />
+      </div>
+
+      {/* 全局语音合成引擎（不渲染 DOM） */}
+      <TTSEngine />
+
+      {/* TTS 测试浮动面板 — 绝对定位右上角，不影响其他元素 */}
+      <div style={{
+        position: 'absolute',
+        top: '12px',
+        right: '12px',
+        zIndex: 9999,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '6px',
+        alignItems: 'flex-end',
+      }}>
+        <span style={{
+          fontSize: '11px',
+          color: 'rgba(255,255,255,0.5)',
+          fontFamily: '"Microsoft YaHei", sans-serif',
+          marginBottom: '2px',
+        }}>TTS 测试</span>
+        <TTSButton label="开场" speaker="AI-A" category="intro" />
+        <TTSButton label="思考" speaker="AI-B" category="think" />
+        <TTSButton label="系统" speaker="系统" category="system" />
+        <TTSButton label="弹幕" speaker="AI-A" category="danmu" />
       </div>
     </div>
   </StrictMode>,
