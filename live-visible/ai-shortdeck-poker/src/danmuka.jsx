@@ -65,7 +65,7 @@ function getAvatar(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=64&font-size=0.4&length=1`
 }
 
-function Danmu() {
+function Danmu({ isExpanded, panelBg, divider }) {
   const [messages, setMessages] = useState([])
   const [status, setStatus] = useState('')
   const idRef = useRef(0)
@@ -93,15 +93,15 @@ function Danmu() {
       setMessages((prev) => {
         const user = randomPick(USERS)
         const next = [
-          ...prev,
           {
             id: idRef.current++,
             user,
             content: randomPick(CONTENTS),
             avatar: getAvatar(user),
           },
+          ...prev,
         ]
-        if (next.length > 30) next.shift()
+        if (next.length > 30) next.pop()
         return next
       })
     }, 800)
@@ -110,81 +110,99 @@ function Danmu() {
   }, [roomId, theme.name])
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100vh',
-        overflow: 'hidden',
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'flex-end',
-        padding: '14px',
-        boxSizing: 'border-box',
-        fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif',
-        fontSize: '17px',
-        pointerEvents: 'none',
-      }}
-    >
-      {/* 调试提示：{status} | 切换主题 ?theme=dark / light / blue / purple / green */}
-      {messages.map((msg) => (
-        <div
-          key={msg.id}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            marginBottom: '6px',
-            padding: '5px 5px',
-            paddingRight: '14px',
-            borderRadius: '25px',
-            background: theme.cardBg,
-            border: theme.cardBorder,
-            backdropFilter: 'blur(6px)',
-            WebkitBackdropFilter: 'blur(6px)',
-            animation: 'danmuPop 0.35s ease-out',
-            maxWidth: 'fit-content',
-          }}
-        >
-          <img
-            src={msg.avatar}
-            alt=""
+    <div style={{ position: 'relative', width: '100%', height: '100%' }}>
+      {/* 弹幕消息列表：从上向下排列 */}
+      <div
+        style={{
+          width: '100%',
+          height: '100%',
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'flex-start',
+          padding: '6px 0 0 0',
+          boxSizing: 'border-box',
+          fontFamily: '"Microsoft YaHei", "PingFang SC", "Noto Sans SC", sans-serif',
+          fontSize: '17px',
+          pointerEvents: 'none',
+        }}
+      >
+        {/* 调试提示：{status} | 切换主题 ?theme=dark / light / blue / purple / green */}
+        {messages.map((msg) => (
+          <div
+            key={msg.id}
             style={{
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              marginBottom: '6px',
+              padding: '5px 5px',
+              paddingRight: '14px',
+              borderRadius: '25px',
+              background: theme.cardBg,
+              border: theme.cardBorder,
+              backdropFilter: 'blur(6px)',
+              WebkitBackdropFilter: 'blur(6px)',
+              animation: 'danmuSlideDown 0.1s ease-out',
+              maxWidth: 'fit-content',
             }}
-          />
-          <div style={{ display: 'flex', alignItems: 'baseline', gap: '7px' }}>
-            <span
+          >
+            <img
+              src={msg.avatar}
+              alt=""
               style={{
-                color: theme.userColor,
-                marginLeft: '-4px',
-                fontWeight: 700,
-                fontSize: '15px',
+                width: '40px',
+                height: '40px',
+                borderRadius: '50%',
                 flexShrink: 0,
               }}
-            >
-              {msg.user}
-            </span>
-            <span
-              style={{
-                color: theme.textColor,
-                fontWeight: 500,
-                wordBreak: 'break-all',
-              }}
-            >
-              {msg.content}
-            </span>
+            />
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '7px' }}>
+              <span
+                style={{
+                  color: theme.userColor,
+                  marginLeft: '-4px',
+                  fontWeight: 700,
+                  fontSize: '15px',
+                  flexShrink: 0,
+                }}
+              >
+                {msg.user}
+              </span>
+              <span
+                style={{
+                  color: theme.textColor,
+                  fontWeight: 500,
+                  wordBreak: 'break-all',
+                }}
+              >
+                {msg.content}
+              </span>
+            </div>
           </div>
-        </div>
-      ))}
-      <style>{`
-        @keyframes danmuPop {
-          from { opacity: 0; transform: translateX(-18px) scale(0.96); }
-          to   { opacity: 1; transform: translateX(0) scale(1); }
-        }
-      `}</style>
+        ))}
+        <style>{`
+          @keyframes danmuSlideDown {
+            from { opacity: 0; transform: translateY(-10px); }
+            to   { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+      </div>
+
+      {/* 底部渐变遮罩 + 分隔线 */}
+      <div
+        style={{
+          position: 'absolute',
+          bottom: 0,
+          left: 0,
+          right: 0,
+          height: isExpanded ? '30px' : '0px',
+          background: `linear-gradient(to bottom, transparent 0%, ${panelBg} 100%)`,
+          borderBottom: `1px solid ${divider}`,
+          pointerEvents: 'none',
+          transition: 'height 0.4s ease',
+        }}
+      />
     </div>
   )
 }

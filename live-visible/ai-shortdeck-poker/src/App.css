@@ -1,184 +1,363 @@
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
+/* ============================================
+   AI 扑克对战 — 双位置循环切换布局
+   正对=右侧中部放大 | 背对=左下角缩小剪影
+   ============================================ */
 
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
+* { box-sizing: border-box; margin: 0; padding: 0; }
 
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
+.battle-root {
   position: relative;
   width: 100%;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  color: #f5f5f5;
+  user-select: none;
+  background: #08080c;
+}
 
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
+/* ---------- 冲击震动 ---------- */
+.battle-root.shake {
+  animation: shake 0.5s ease;
+}
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0); }
+  10% { transform: translate(-5px, 3px); }
+  20% { transform: translate(4px, -3px); }
+  30% { transform: translate(-4px, 4px); }
+  40% { transform: translate(5px, -2px); }
+  50% { transform: translate(-3px, 3px); }
+  60% { transform: translate(3px, -4px); }
+  70% { transform: translate(-4px, 2px); }
+  80% { transform: translate(2px, -2px); }
+  90% { transform: translate(-2px, 1px); }
+}
 
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
+/* ---------- 背景 ---------- */
+.bg {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 35%, rgba(25, 25, 38, 0.9) 0%, transparent 70%),
+    radial-gradient(ellipse 50% 60% at 20% 80%, rgba(255, 133, 162, 0.03) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 60% at 80% 20%, rgba(102, 217, 255, 0.03) 0%, transparent 60%);
+}
+.bg-spot {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse 40% 30% at 50% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 70%);
+}
+
+/* ---------- 顶部 POT ---------- */
+.pot-top {
+  position: absolute;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(12, 12, 18, 0.85);
+  border: 1px solid rgba(255, 215, 0, 0.15);
+  padding: 6px 22px;
+  border-radius: 24px;
+  backdrop-filter: blur(10px);
+}
+.pot-txt { font-size: 11px; color: rgba(255, 215, 0, 0.7); letter-spacing: 3px; font-weight: 700; }
+.pot-val { font-size: 24px; font-weight: 800; color: #ffd700; text-shadow: 0 0 15px rgba(255, 215, 0, 0.3); }
+
+/* ---------- 角色立绘层 ---------- */
+.char-layer { position: absolute; inset: 0; z-index: 5; pointer-events: none; }
+
+.char {
+  position: absolute;
+  transition: all 0.9s cubic-bezier(0.4, 0, 0.2, 1);
+  will-change: left, top, transform, filter;
+}
+.char img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center 15%;
+}
+
+/* ===== 默认位置（idle / 过渡） ===== */
+.char-a {
+  left: 22%;
+  top: 62%;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, 0) scale(0.6);
+  filter: brightness(0.35);
+  z-index: 6;
+}
+.char-b {
+  left: 70%;
+  top: 38%;
+  width: 440px;
+  height: 440px;
+  transform: translate(-50%, -50%) scale(0.6);
+  filter: brightness(0.35);
+  z-index: 6;
+}
+
+/* ===== AI-A 正对（右侧中部放大明亮） ===== */
+.focus-left .char-a {
+  left: 66%;
+  top: 42%;
+  transform: translate(-50%, -50%) scale(1.18);
+  filter: brightness(1.15);
+  z-index: 12;
+}
+/* AI-B 背对（左下角缩小剪影） */
+.focus-left .char-b {
+  left: 20%;
+  top: 72%;
+  transform: translate(-50%, 0) scale(0.48);
+  filter: brightness(0.1) grayscale(0.85) blur(2px);
+  z-index: 4;
+}
+
+/* ===== AI-B 正对（右侧中部放大明亮） ===== */
+.focus-right .char-b {
+  left: 66%;
+  top: 42%;
+  transform: translate(-50%, -50%) scale(1.18);
+  filter: brightness(1.15);
+  z-index: 12;
+}
+/* AI-A 背对（左下角缩小剪影） */
+.focus-right .char-a {
+  left: 20%;
+  top: 72%;
+  transform: translate(-50%, 0) scale(0.48);
+  filter: brightness(0.1) grayscale(0.85) blur(2px);
+  z-index: 4;
+}
+
+/* ---------- 资金条（跟随角色位置） ---------- */
+.hp {
+  position: absolute;
+  width: 200px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(12, 12, 18, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 14px;
+  backdrop-filter: blur(8px);
+  transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+  z-index: 25;
+}
+
+/* 资金条默认/背对位置：左下角 */
+.hp-back {
+  left: 20px;
+  bottom: 140px;
+}
+/* 资金条正对位置：右侧 */
+.hp-front {
+  left: auto;
+  right: 20px;
+  top: 12%;
+  bottom: auto;
+}
+
+/* AI-A 资金条颜色 */
+.hp-a .hp-fill { background: linear-gradient(90deg, #ff85a2, #e05a8a); }
+/* AI-B 资金条颜色 */
+.hp-b .hp-fill { background: linear-gradient(90deg, #66d9ff, #4aa8e0); }
+
+.hp-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.hp-name { font-size: 14px; font-weight: 800; letter-spacing: 2px; color: rgba(255,255,255,0.7); }
+.hp-num { font-size: 14px; font-weight: 700; color: #ffd700; }
+
+.hp-bar {
+  height: 8px;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 4px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+.hp-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.9s ease;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.think-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 6px;
+  border: 1px solid;
+  width: fit-content;
+  margin-top: 2px;
+  background: rgba(0, 0, 0, 0.4);
+  animation: badge-pop 0.3s ease;
+}
+@keyframes badge-pop {
+  from { opacity: 0; transform: translateY(-4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------- 公共牌区域 ---------- */
+.comm-area {
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  transform: translate(-50%, -50%);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+.comm-cards {
+  display: flex;
+  gap: 8px;
+  padding: 12px;
+  background: rgba(12, 12, 18, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  backdrop-filter: blur(6px);
+}
+.cslot { transition: all 0.4s ease; }
+.cfill { animation: deal-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes deal-in {
+  from { opacity: 0; transform: translateY(-30px) scale(0.6) rotateY(90deg); }
+  to { opacity: 1; transform: translateY(0) scale(1) rotateY(0); }
+}
+.cplace {
+  width: 40px;
+  height: 56px;
+  border-radius: 5px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.08);
+  background: rgba(255, 255, 255, 0.015);
+}
+.mini-log {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: center;
+  min-height: 60px;
+}
+.mini-log span {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  padding: 3px 12px;
+  border-radius: 10px;
+  animation: log-in 0.3s ease;
+}
+@keyframes log-in {
+  from { opacity: 0; transform: translateY(-3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* mini 扑克牌 */
+.mcard {
+  width: 40px;
+  height: 56px;
+  background: #fff;
+  border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(0, 0, 0, 0.06);
+}
+.mhidden {
+  background: linear-gradient(135deg, #162238, #0a1528);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.mback {
+  width: 65%;
+  height: 65%;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  background: repeating-linear-gradient(45deg, transparent, transparent 3px, rgba(255, 255, 255, 0.03) 3px, rgba(255, 255, 255, 0.03) 6px);
+}
+
+/* ---------- 底部对话框 ---------- */
+.dialog-box {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 30;
+  padding: 16px 24px 20px;
+  background: linear-gradient(180deg, transparent, rgba(8, 8, 12, 0.95) 30%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+}
+.dialog-main {
+  flex: 1;
+  min-width: 0;
+  background: rgba(18, 18, 22, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 12px;
+  padding: 14px 20px;
+  backdrop-filter: blur(12px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+.dialog-spk {
+  font-size: 13px;
+  font-weight: 800;
+  letter-spacing: 2px;
+  margin-bottom: 6px;
+}
+.dialog-txt {
+  font-size: 17px;
+  line-height: 1.6;
+  color: rgba(245, 245, 245, 0.92);
+  min-height: 28px;
+}
+.cursor {
+  color: #ff85a2;
+  animation: blink 0.5s step-end infinite;
+  margin-left: 2px;
+}
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+.btn {
+  background: linear-gradient(180deg, rgba(255, 133, 162, 0.9), rgba(220, 80, 120, 0.9));
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 26px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 4px 0 rgba(160, 50, 90, 0.5), 0 6px 20px rgba(255, 133, 162, 0.2);
+  transition: all 0.1s ease;
+  white-space: nowrap;
+  letter-spacing: 2px;
+}
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 0 rgba(160, 50, 90, 0.5), 0 10px 30px rgba(255, 133, 162, 0.3);
+}
+.btn:active {
+  transform: translateY(2px);
+  box-shadow: 0 2px 0 rgba(160, 50, 90, 0.5), 0 3px 10px rgba(255, 133, 162, 0.2);
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 1000px) {
+  .char-a, .char-b { width: 360px; height: 360px; }
+  .focus-left .char-a, .focus-right .char-b { transform: translate(-50%, -50%) scale(1.1); }
+  .focus-left .char-b, .focus-right .char-a { transform: translate(-50%, 0) scale(0.45); }
+  .hp { width: 170px; }
+  .dialog-txt { font-size: 15px; }
 }
