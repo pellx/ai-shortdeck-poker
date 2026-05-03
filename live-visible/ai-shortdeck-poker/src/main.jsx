@@ -65,13 +65,14 @@ function randomPick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-function TTSButton({ label, speaker, category }) {
+function TTSButton({ label, speaker, category, provider }) {
   const [playing, setPlaying] = useState(false)
 
   const handleClick = () => {
     const text = randomPick(TEST_TEXTS[category] || TEST_TEXTS.intro)
     setPlaying(true)
-    const audio = new Audio(`http://localhost:8000/tts/speak?text=${encodeURIComponent(text)}&speaker=${encodeURIComponent(speaker)}`)
+    const base = provider === 'minimax' ? 'http://localhost:8001' : 'http://localhost:8000'
+    const audio = new Audio(`${base}/tts/speak?text=${encodeURIComponent(text)}&speaker=${encodeURIComponent(speaker)}`)
     audio.onended = () => setPlaying(false)
     audio.onerror = () => setPlaying(false)
     audio.play().catch(() => setPlaying(false))
@@ -101,6 +102,57 @@ function TTSButton({ label, speaker, category }) {
     >
       {playing ? '🔊 ...' : `🔊 ${label}`}
     </button>
+  )
+}
+
+function TTSControlPanel() {
+  const [provider, setProvider] = useState('edge')
+
+  const toggle = () => setProvider(p => p === 'edge' ? 'minimax' : 'edge')
+
+  const pillStyle = (active) => ({
+    padding: '4px 10px',
+    borderRadius: '12px',
+    border: 'none',
+    fontSize: '11px',
+    fontWeight: 600,
+    cursor: 'pointer',
+    fontFamily: '"Microsoft YaHei", sans-serif',
+    transition: 'all 0.2s',
+    background: active ? 'rgba(100,200,255,0.35)' : 'rgba(255,255,255,0.08)',
+    color: active ? '#fff' : 'rgba(255,255,255,0.6)',
+  })
+
+  return (
+    <div style={{
+      position: 'absolute',
+      top: '12px',
+      right: '12px',
+      zIndex: 9999,
+      display: 'flex',
+      flexDirection: 'column',
+      gap: '6px',
+      alignItems: 'flex-end',
+    }}>
+      {/* Provider 切换 */}
+      <div style={{
+        display: 'flex',
+        gap: '4px',
+        padding: '4px',
+        borderRadius: '14px',
+        background: 'rgba(0,0,0,0.4)',
+        backdropFilter: 'blur(8px)',
+      }}>
+        <button style={pillStyle(provider === 'edge')} onClick={() => setProvider('edge')}>Edge</button>
+        <button style={pillStyle(provider === 'minimax')} onClick={() => setProvider('minimax')}>MiniMax</button>
+      </div>
+
+      {/* 测试按钮 */}
+      <TTSButton label="开场" speaker="AI-A" category="intro" provider={provider} />
+      <TTSButton label="思考" speaker="AI-B" category="think" provider={provider} />
+      <TTSButton label="系统" speaker="系统" category="system" provider={provider} />
+      <TTSButton label="弹幕" speaker="AI-A" category="danmu" provider={provider} />
+    </div>
   )
 }
 
@@ -167,7 +219,7 @@ createRoot(document.getElementById('root')).render(
     <div style={{ position: 'fixed', inset: 0, display: 'flex' }}>
       <LeftPanel />
 
-      {/* 右侧玩法区 - 由另一个 agent 负责开发牌桌场景 */}
+      {/* 3D 牌桌全屏 */}
       <div style={{
         flex: 1,
         height: '100vh',
@@ -181,27 +233,7 @@ createRoot(document.getElementById('root')).render(
       <TTSEngine />
 
       {/* TTS 测试浮动面板 — 绝对定位右上角，不影响其他元素 */}
-      <div style={{
-        position: 'absolute',
-        top: '12px',
-        right: '12px',
-        zIndex: 9999,
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '6px',
-        alignItems: 'flex-end',
-      }}>
-        <span style={{
-          fontSize: '11px',
-          color: 'rgba(255,255,255,0.5)',
-          fontFamily: '"Microsoft YaHei", sans-serif',
-          marginBottom: '2px',
-        }}>TTS 测试</span>
-        <TTSButton label="开场" speaker="AI-A" category="intro" />
-        <TTSButton label="思考" speaker="AI-B" category="think" />
-        <TTSButton label="系统" speaker="系统" category="system" />
-        <TTSButton label="弹幕" speaker="AI-A" category="danmu" />
-      </div>
+      <TTSControlPanel />
     </div>
   </StrictMode>,
 )

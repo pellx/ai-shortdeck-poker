@@ -133,51 +133,95 @@ function Danmu({ isExpanded }) {
             key={msg.id}
             style={{
               display: 'flex',
-              alignItems: 'center',
-              gap: '10px',
-              marginBottom: '6px',
-              padding: '5px 5px',
-              paddingRight: '14px',
-              borderRadius: '25px',
-              background: theme.cardBg,
-              border: theme.cardBorder,
-              backdropFilter: 'blur(6px)',
-              WebkitBackdropFilter: 'blur(6px)',
+              alignItems: 'flex-end',
+              marginBottom: '8px',
               animation: 'danmuSlideDown 0.1s ease-out',
               maxWidth: 'fit-content',
             }}
           >
+            {/* 头像：大圆形，浅绿填充 + 深绿粗边框 */}
             <img
               src={msg.avatar}
               alt=""
               style={{
-                width: '40px',
-                height: '40px',
+                width: '44px',
+                height: '44px',
                 borderRadius: '50%',
+                border: '3px solid #4CAF50',
+                background: '#C8E6C9',
                 flexShrink: 0,
+                zIndex: 2,
+                position: 'relative',
               }}
             />
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '7px' }}>
-              <span
+
+            {/* 右侧：用户名行 + 绿色方框 */}
+            <div
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                marginLeft: '-10px',
+                minWidth: 0,
+              }}
+            >
+              {/* 用户名 + 成就标示（黄、红圆点） */}
+              <div
                 style={{
-                  color: theme.userColor,
-                  marginLeft: '-4px',
-                  fontWeight: 700,
-                  fontSize: '15px',
-                  flexShrink: 0,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  paddingLeft: '16px',
+                  marginBottom: '2px',
                 }}
               >
-                {msg.user}
-              </span>
-              <span
+                <span
+                  style={{
+                    color: '#1a1a1a',
+                    fontWeight: 700,
+                    fontSize: '12px',
+                    flexShrink: 0,
+                  }}
+                >
+                  {msg.user}
+                </span>
+                {/* 黄色成就标示 */}
+                <span
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: '#FFD700',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                  }}
+                />
+                {/* 红色成就标示 */}
+                <span
+                  style={{
+                    width: '10px',
+                    height: '10px',
+                    borderRadius: '50%',
+                    background: '#E53935',
+                    display: 'inline-block',
+                    flexShrink: 0,
+                  }}
+                />
+              </div>
+
+              {/* 绿色方框：弹幕内容 */}
+              <div
                 style={{
-                  color: theme.textColor,
+                  background: '#66BB6A',
+                  borderRadius: '14px',
+                  padding: '7px 14px',
+                  color: '#1a1a1a',
+                  fontSize: '14px',
                   fontWeight: 500,
                   wordBreak: 'break-all',
                 }}
               >
                 {msg.content}
-              </span>
+              </div>
             </div>
           </div>
         ))}

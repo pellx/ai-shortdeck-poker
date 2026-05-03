@@ -1,57 +1,150 @@
 /* ============================================
-   短牌德州扑克 — 仅保留 3D 牌桌 + 开始按钮
+   2D 短牌德州扑克牌桌 — 跑道形俯视图
    ============================================ */
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-.battle-root {
-  position: relative;
+.table-root {
   width: 100%;
   height: 100%;
-  overflow: hidden;
+  background: #0a0a0f;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  gap: 40px;
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
 }
 
-/* ---------- 冲击震动 ---------- */
-.battle-root.shake {
-  animation: shake 0.5s ease;
+/* ---------- 跑道形牌桌 ----------
+   aspect-ratio: 1.75 / 1
+   border-radius: 28.6% = 100% / (2 * 1.75)
+   这样上下两端圆弧刚好相接形成半圆，
+   左右两边保持直线
+*/
+.poker-table {
+  width: min(82vw, 960px);
+  aspect-ratio: 1.75 / 1;
+  border-radius: 28.6%;
+  background: #1b5e2e;
+  box-shadow:
+    0 0 0 14px #3d2817,
+    0 20px 60px rgba(0, 0, 0, 0.5),
+    inset 0 0 0 2px rgba(255, 255, 255, 0.15);
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
-@keyframes shake {
-  0%, 100% { transform: translate(0, 0); }
-  10% { transform: translate(-5px, 3px); }
-  20% { transform: translate(4px, -3px); }
-  30% { transform: translate(-4px, 4px); }
-  40% { transform: translate(5px, -2px); }
-  50% { transform: translate(-3px, 3px); }
-  60% { transform: translate(3px, -4px); }
-  70% { transform: translate(-4px, 2px); }
-  80% { transform: translate(2px, -2px); }
-  90% { transform: translate(-2px, 1px); }
+
+/* ---------- 公共牌区域 ---------- */
+.community-area {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  display: flex;
+  gap: 8px;
+}
+
+.card-slot {
+  width: 44px;
+  height: 62px;
+  border-radius: 6px;
+  border: 1.5px dashed rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ---------- 底池 ---------- */
+.pot-display {
+  position: absolute;
+  top: 18%;
+  left: 50%;
+  transform: translateX(-50%);
+  color: rgba(255, 255, 255, 0.6);
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 2px;
+}
+
+/* ---------- 玩家位置 ---------- */
+.player-pos {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.pos-left {
+  left: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.pos-right {
+  right: 8%;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.player-avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.player-name {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 2px;
 }
 
 /* ---------- 开始按钮 ---------- */
 .start-btn {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  z-index: 100;
-  background: rgba(255, 255, 255, 0.1);
+  background: rgba(255, 255, 255, 0.08);
   color: rgba(255, 255, 255, 0.8);
   border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 8px;
   padding: 14px 36px;
   font-size: 15px;
   font-weight: 600;
-  font-family: 'Microsoft YaHei', sans-serif;
   cursor: pointer;
   transition: all 0.2s ease;
   letter-spacing: 4px;
 }
+
 .start-btn:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.15);
   color: #fff;
   border-color: rgba(255, 255, 255, 0.3);
 }
+
 .start-btn:active {
   opacity: 0.7;
+}
+
+/* ---------- 响应式 ---------- */
+@media (max-width: 768px) {
+  .poker-table {
+    width: 92vw;
+  }
+
+  .card-slot {
+    width: 36px;
+    height: 50px;
+  }
+
+  .player-avatar {
+    width: 36px;
+    height: 36px;
+  }
+
+  .player-name {
+    font-size: 10px;
+  }
 }
