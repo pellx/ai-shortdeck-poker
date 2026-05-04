@@ -1,0 +1,34 @@
+[TTS] voices loaded: 9 Microsoft Huihui - Chinese (Simplified, PRC), Microsoft Mark - English (United States), Microsoft Zira - English (United States), Microsoft David - English (United States), Microsoft Kangkang - Chinese (Simplified, PRC), Microsoft Yaoyao - Chinese (Simplified, PRC), Microsoft Huihui Desktop - Chinese (Simplified), Microsoft Zira Desktop - English (United States), Microsoft David Desktop - English (United States) index-Bl2vh3SN.js:14:3959
+Firefox 无法建立到 wss://bd-sz-live-comet-mixed-01.chat.bilibili.com/sub 服务器的连接。 browser-BtsPRX3U.js:13:132204
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, eventPhase: 0, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, timeStamp: 2329, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569
+Firefox 无法建立到 ws://localhost:8002/ws 服务器的连接。 index-Bl2vh3SN.js:9:43409
+[WS] error 
+error { target: WebSocket, isTrusted: true, srcElement: WebSocket, currentTarget: WebSocket, eventPhase: 2, bubbles: false, cancelable: false, returnValue: true, defaultPrevented: false, composed: false, … }
+index-Bl2vh3SN.js:9:43569

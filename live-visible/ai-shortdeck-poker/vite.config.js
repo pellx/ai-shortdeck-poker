@@ -1,9 +1,11 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import ttsProxy from './vite-plugin-tts.js'
+import biliProxy from './vite-plugin-bili-proxy.js'
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), ttsProxy(), biliProxy()],
   server: {
     allowedHosts: ['shortdeck-pocker.leisure.xin'],
     proxy: {

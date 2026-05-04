@@ -4,7 +4,7 @@ import './index.css'
 import App from './App.jsx'
 import Danmu from './danmuka.jsx'
 import RankList from './RankList.jsx'
-import TTSEngine from './TTSEngine.jsx'
+import { speak, stop, setProvider, getProvider, isWebReady } from './useTTS.js'
 
 const PANEL_THEMES = {
   dark: {
@@ -39,7 +39,7 @@ const PANEL_THEMES = {
   },
 }
 
-/* ===== 项目已有的测试文本（用于 TTS 测试） ===== */
+/* ===== 项目已有的测试文本 ===== */
 const TEST_TEXTS = {
   intro: [
     '今晚的底池我全包了。', '短牌才是我的主场。', '准备好输光筹码了吗？', '36张牌，我看你怎么赢。',
@@ -65,50 +65,28 @@ function randomPick(arr) {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
-function TTSButton({ label, speaker, category, provider }) {
+/* ===== TTS 测试浮动面板 ===== */
+function TTSControlPanel() {
+  const [provider, setLocalProvider] = useState(getProvider())
   const [playing, setPlaying] = useState(false)
+  const [ready, setReady] = useState(isWebReady())
 
-  const handleClick = () => {
-    const text = randomPick(TEST_TEXTS[category] || TEST_TEXTS.intro)
-    setPlaying(true)
-    const base = provider === 'minimax' ? 'http://localhost:8001' : 'http://localhost:8000'
-    const audio = new Audio(`${base}/tts/speak?text=${encodeURIComponent(text)}&speaker=${encodeURIComponent(speaker)}`)
-    audio.onended = () => setPlaying(false)
-    audio.onerror = () => setPlaying(false)
-    audio.play().catch(() => setPlaying(false))
+  useEffect(() => {
+    const timer = setInterval(() => setReady(isWebReady()), 500)
+    return () => clearInterval(timer)
+  }, [])
+
+  const switchProvider = (p) => {
+    setProvider(p)
+    setLocalProvider(p)
   }
 
-  return (
-    <button
-      onClick={handleClick}
-      disabled={playing}
-      style={{
-        padding: '6px 14px',
-        borderRadius: '20px',
-        border: '1px solid rgba(255,255,255,0.12)',
-        background: playing ? 'rgba(100,200,255,0.25)' : 'rgba(0,0,0,0.45)',
-        color: '#fff',
-        fontSize: '12px',
-        fontWeight: 600,
-        cursor: playing ? 'wait' : 'pointer',
-        opacity: playing ? 0.8 : 1,
-        fontFamily: '"Microsoft YaHei", sans-serif',
-        transition: 'all 0.2s',
-        whiteSpace: 'nowrap',
-        backdropFilter: 'blur(8px)',
-      }}
-      onMouseEnter={(e) => { if (!playing) e.target.style.background = 'rgba(0,0,0,0.6)' }}
-      onMouseLeave={(e) => { if (!playing) e.target.style.background = 'rgba(0,0,0,0.45)' }}
-    >
-      {playing ? '🔊 ...' : `🔊 ${label}`}
-    </button>
-  )
-}
-
-function TTSControlPanel() {
-  const [provider, setProvider] = useState('edge')
-
-  const toggle = () => setProvider(p => p === 'edge' ? 'minimax' : 'edge')
+  const handlePlay = (speaker, category) => {
+    const text = randomPick(TEST_TEXTS[category] || TEST_TEXTS.intro)
+    setPlaying(true)
+    speak(text, speaker)
+    setTimeout(() => setPlaying(false), 1200)
+  }
 
   const pillStyle = (active) => ({
     padding: '4px 10px',
@@ -122,6 +100,22 @@ function TTSControlPanel() {
     background: active ? 'rgba(100,200,255,0.35)' : 'rgba(255,255,255,0.08)',
     color: active ? '#fff' : 'rgba(255,255,255,0.6)',
   })
+
+  const btnStyle = {
+    padding: '6px 14px',
+    borderRadius: '20px',
+    border: '1px solid rgba(255,255,255,0.12)',
+    background: playing ? 'rgba(100,200,255,0.25)' : 'rgba(0,0,0,0.45)',
+    color: '#fff',
+    fontSize: '12px',
+    fontWeight: 600,
+    cursor: playing ? 'wait' : 'pointer',
+    opacity: playing ? 0.8 : 1,
+    fontFamily: '"Microsoft YaHei", sans-serif',
+    transition: 'all 0.2s',
+    whiteSpace: 'nowrap',
+    backdropFilter: 'blur(8px)',
+  }
 
   return (
     <div style={{
@@ -143,15 +137,22 @@ function TTSControlPanel() {
         background: 'rgba(0,0,0,0.4)',
         backdropFilter: 'blur(8px)',
       }}>
-        <button style={pillStyle(provider === 'edge')} onClick={() => setProvider('edge')}>Edge</button>
-        <button style={pillStyle(provider === 'minimax')} onClick={() => setProvider('minimax')}>MiniMax</button>
+        <button style={pillStyle(provider === 'edge')} onClick={() => switchProvider('edge')}>Edge</button>
+        <button style={pillStyle(provider === 'web')} onClick={() => switchProvider('web')}>浏览器</button>
+        <button style={pillStyle(provider === 'minimax')} onClick={() => switchProvider('minimax')}>MiniMax</button>
       </div>
 
+      {/* 状态提示 */}
+      {!ready && provider === 'web' && (
+        <span style={{ fontSize: '10px', color: 'rgba(255,200,100,0.7)' }}>加载语音中...</span>
+      )}
+
       {/* 测试按钮 */}
-      <TTSButton label="开场" speaker="AI-A" category="intro" provider={provider} />
-      <TTSButton label="思考" speaker="AI-B" category="think" provider={provider} />
-      <TTSButton label="系统" speaker="系统" category="system" provider={provider} />
-      <TTSButton label="弹幕" speaker="AI-A" category="danmu" provider={provider} />
+      <button style={btnStyle} onClick={() => handlePlay('AI-A', 'intro')} disabled={playing}>🔊 开场</button>
+      <button style={btnStyle} onClick={() => handlePlay('AI-B', 'think')} disabled={playing}>🔊 思考</button>
+      <button style={btnStyle} onClick={() => handlePlay('系统', 'system')} disabled={playing}>🔊 系统</button>
+      <button style={btnStyle} onClick={() => handlePlay('AI-A', 'danmu')} disabled={playing}>🔊 弹幕</button>
+      <button style={{ ...btnStyle, background: 'rgba(255,80,80,0.25)' }} onClick={stop}>⏹ 停止</button>
     </div>
   )
 }
@@ -228,9 +229,6 @@ createRoot(document.getElementById('root')).render(
       }}>
         <App />
       </div>
-
-      {/* 全局语音合成引擎（不渲染 DOM） */}
-      <TTSEngine />
 
       {/* TTS 测试浮动面板 — 绝对定位右上角，不影响其他元素 */}
       <TTSControlPanel />

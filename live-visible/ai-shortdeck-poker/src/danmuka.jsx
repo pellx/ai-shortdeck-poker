@@ -75,38 +75,166 @@ function Danmu({ isExpanded }) {
   const themeKey = params.get('theme') || 'dark'
   const theme = THEMES[themeKey] || THEMES.dark
 
+  // 从 localStorage 读取 B站 Cookie（config.json 不存在时的 fallback）
+  const localCookie = localStorage.getItem('bili_cookie') || ''
+
   useEffect(() => {
-    setStatus(`房间 ${roomId} · 主题: ${theme.name}`)
+    let cleanupFn = null
 
-    const initial = Array.from({ length: 5 }, (_, i) => {
-      const user = USERS[i % USERS.length]
-      return {
-        id: idRef.current++,
-        user,
-        content: randomPick(CONTENTS),
-        avatar: getAvatar(user),
-      }
-    })
-    setMessages(initial)
+    const startMockDanmu = () => {
+      setStatus('模拟房间 · 主题: ' + theme.name)
 
-    const timer = setInterval(() => {
-      setMessages((prev) => {
-        const user = randomPick(USERS)
-        const next = [
-          {
-            id: idRef.current++,
-            user,
-            content: randomPick(CONTENTS),
-            avatar: getAvatar(user),
-          },
-          ...prev,
-        ]
-        if (next.length > 30) next.pop()
-        return next
+      const initial = Array.from({ length: 5 }, (_, i) => {
+        const user = USERS[i % USERS.length]
+        return {
+          id: idRef.current++,
+          user,
+          content: randomPick(CONTENTS),
+          avatar: getAvatar(user),
+          hasBadges: Math.random() > 0.4,
+        }
       })
-    }, 800)
+      setMessages(initial)
 
-    return () => clearInterval(timer)
+      const timer = setInterval(() => {
+        setMessages((prev) => {
+          const user = randomPick(USERS)
+          const next = [
+            {
+              id: idRef.current++,
+              user,
+              content: randomPick(CONTENTS),
+              avatar: getAvatar(user),
+              hasBadges: Math.random() > 0.4,
+            },
+            ...prev,
+          ]
+          if (next.length > 30) next.pop()
+          return next
+        })
+      }, 800)
+
+      cleanupFn = () => clearInterval(timer)
+    }
+
+    // 没有真实房间号时使用模拟数据
+    if (!roomId || roomId === '模拟房间') {
+      startMockDanmu()
+      return cleanupFn
+    }
+
+    // 有真实房间号，连接 B站直播弹幕
+    setStatus(`房间 ${roomId} · 连接中...`)
+    let instance = null
+
+    const connect = async () => {
+      // 读取配置：优先 config.json，fallback localStorage
+      let cookie = localCookie
+      let preToken = ''
+      let preBuvid = ''
+      let preHost = ''
+      let prePort = 0
+      try {
+        const res = await fetch('/config.json')
+        const cfg = await res.json()
+        if (cfg.cookie) cookie = cfg.cookie
+        if (cfg.token) preToken = cfg.token
+        if (cfg.buvid) preBuvid = cfg.buvid
+        if (cfg.host) preHost = cfg.host
+        if (cfg.port) prePort = Number(cfg.port)
+      } catch (e) {
+        // config.json 不存在或读取失败
+      }
+
+      // 从 Cookie 中提取 uid
+      let uid = 0
+      if (cookie) {
+        const m = cookie.match(/DedeUserID=(\d+)/)
+        if (m) uid = Number(m[1])
+      }
+
+      // 获取 B站弹幕认证参数（token / buvid / 真实房间号）
+      let token = preToken
+      let buvid = preBuvid
+      let realRoomId = Number(roomId)
+      let wsHost = preHost
+      let wsPort = prePort
+      try {
+        const authRes = await fetch(`/api/bili/auth?roomId=${roomId}`)
+        const authJson = await authRes.json()
+        if (authJson.code === 0 && authJson.data) {
+          token = authJson.data.token || token
+          buvid = authJson.data.buvid || buvid
+          realRoomId = authJson.data.roomId || realRoomId
+          wsHost = authJson.data.host || wsHost
+          wsPort = authJson.data.port || wsPort
+        }
+      } catch (e) {
+        console.warn('[danmu] /api/bili/auth 不可用，尝试使用预配置参数', e.message)
+      }
+
+      // 如果仍然没有 buvid，尝试从 cookie 中提取
+      if (!buvid && cookie) {
+        const m = cookie.match(/buvid3=([^;]+)/)
+        if (m) buvid = decodeURIComponent(m[1])
+      }
+
+      const wsOptions = {
+        platform: 'web',
+        protover: 3,
+        type: 2,
+        uid,
+      }
+      if (token) wsOptions.key = token
+      if (buvid) wsOptions.buvid = buvid
+      if (cookie) wsOptions.headers = { Cookie: cookie }
+      if (wsHost) {
+        wsOptions.host = wsHost
+        wsOptions.port = wsPort
+        wsOptions.ssl = wsPort === 443
+      }
+
+      try {
+        const { startListen } = await import('blive-message-listener/browser')
+        instance = startListen(realRoomId, {
+          onOpen: () => setStatus(`房间 ${realRoomId} · 已连接`),
+          onClose: () => setStatus(`房间 ${realRoomId} · 已断开`),
+          onError: (err) => {
+            console.error('弹幕连接错误', err)
+            setStatus(`房间 ${realRoomId} · 连接失败，已切换模拟弹幕`)
+            if (instance) { instance.close(); instance = null }
+            startMockDanmu() // fallback
+          },
+          onIncomeDanmu: (msg) => {
+            setMessages((prev) => {
+              const next = [
+                {
+                  id: msg.id,
+                  user: msg.body.user.uname,
+                  content: msg.body.content,
+                  avatar: msg.body.user.face || getAvatar(msg.body.user.uname),
+                  hasBadges: (msg.body.user.identity?.guard_level ?? 0) > 0,
+                },
+                ...prev,
+              ]
+              if (next.length > 30) next.pop()
+              return next
+            })
+          },
+        }, { ws: wsOptions })
+        cleanupFn = () => { if (instance) instance.close() }
+      } catch (err) {
+        console.error('导入 blive-message-listener 失败', err)
+        setStatus(`房间 ${realRoomId} · 连接失败: ${err.message}`)
+        startMockDanmu() // fallback
+      }
+    }
+
+    connect()
+
+    return () => {
+      if (cleanupFn) cleanupFn()
+    }
   }, [roomId, theme.name])
 
   return (
@@ -139,13 +267,13 @@ function Danmu({ isExpanded }) {
               maxWidth: 'fit-content',
             }}
           >
-            {/* 头像：大圆形，浅绿填充 + 深绿粗边框 */}
+            {/* 头像：在信息栏左上方，z-index 更高 */}
             <img
               src={msg.avatar}
               alt=""
               style={{
-                width: '44px',
-                height: '44px',
+                width: '50px',
+                height: '50px',
                 borderRadius: '50%',
                 border: '3px solid #4CAF50',
                 background: '#C8E6C9',
@@ -155,69 +283,68 @@ function Danmu({ isExpanded }) {
               }}
             />
 
-            {/* 右侧：用户名行 + 绿色方框 */}
+            {/* 右侧：用户名行 + 绿色信息栏 */}
             <div
               style={{
                 display: 'flex',
                 flexDirection: 'column',
-                marginLeft: '-10px',
+                marginLeft: '-18px',
                 minWidth: 0,
+                paddingTop: '4px',
               }}
             >
-              {/* 用户名 + 成就标示（黄、红圆点） */}
+              {/* 用户名 + 成就标示（可拓展数组渲染） */}
               <div
                 style={{
                   display: 'flex',
                   alignItems: 'center',
                   gap: '5px',
-                  paddingLeft: '16px',
                   marginBottom: '2px',
+                  paddingLeft: '19px',
                 }}
               >
                 <span
                   style={{
-                    color: '#1a1a1a',
+                    color: theme.userColor,
                     fontWeight: 700,
-                    fontSize: '12px',
+                    fontSize: '14px',
                     flexShrink: 0,
                   }}
                 >
                   {msg.user}
                 </span>
-                {/* 黄色成就标示 */}
-                <span
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: '#FFD700',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
-                {/* 红色成就标示 */}
-                <span
-                  style={{
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    background: '#E53935',
-                    display: 'inline-block',
-                    flexShrink: 0,
-                  }}
-                />
+                {msg.hasBadges && [
+                  { color: '#FFD700', key: 'gold' },
+                  { color: '#E53935', key: 'red' },
+                ].map((badge) => (
+                  <span
+                    key={badge.key}
+                    style={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: badge.color,
+                      display: 'inline-block',
+                      flexShrink: 0,
+                    }}
+                  />
+                ))}
               </div>
 
-              {/* 绿色方框：弹幕内容 */}
+              {/* 信息栏：弹幕内容 */}
               <div
                 style={{
-                  background: '#66BB6A',
-                  borderRadius: '14px',
+                  background: theme.cardBg,
+                  border: theme.cardBorder,
+                  borderRadius: '5px',
                   padding: '7px 14px',
-                  color: '#1a1a1a',
+                  paddingLeft: '21px',
+                  color: theme.textColor,
                   fontSize: '14px',
                   fontWeight: 500,
                   wordBreak: 'break-all',
+                  backdropFilter: 'blur(6px)',
+                  WebkitBackdropFilter: 'blur(6px)',
                 }}
               >
                 {msg.content}
