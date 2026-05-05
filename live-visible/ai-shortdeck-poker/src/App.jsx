@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import './App.css'
 import expressionMap from './assets/expression_map.json'
+import { voteStore } from './voteStore'
+import { rankStore } from './rankStore'
 
 /* ===== 配置 ===== */
 const WS_URL = (() => {
@@ -90,7 +92,7 @@ export default function App() {
   const [leftName, setLeftName] = useState('AI-A')
   const [rightName, setRightName] = useState('AI-B')
   const [msg, setMsg] = useState('等待连接后端引擎...')
-  const [commentary, setCommentary] = useState('')
+  const [commentaryList, setCommentaryList] = useState([])
   const [leftTrashTalk, setLeftTrashTalk] = useState('')
   const [rightTrashTalk, setRightTrashTalk] = useState('')
   const [leftThinking, setLeftThinking] = useState('')
@@ -99,6 +101,9 @@ export default function App() {
   const [thinking, setThinking] = useState(false)
   const [handOver, setHandOver] = useState(false)
   const [winner, setWinner] = useState(null)
+
+  /* -- 测试模式 -- */
+  const isTestMode = new URLSearchParams(window.location.search).get('test') === '1'
 
   /* -- 表情 -- */
   const [leftExpr, setLeftExpr] = useState(1)
@@ -109,6 +114,7 @@ export default function App() {
   const rightBubbleTimer = useRef(null)
   const leftThinkTimer = useRef(null)
   const rightThinkTimer = useRef(null)
+
 
   /* ---- WebSocket 连接 ---- */
   useEffect(() => {
@@ -233,7 +239,7 @@ export default function App() {
 
       case 'match_started': {
         setMsg('新比赛开始')
-        setCommentary('')
+        setCommentaryList([])
         setLeftTrashTalk('')
         setRightTrashTalk('')
         setLeftThinking('')
@@ -245,11 +251,13 @@ export default function App() {
 
       case 'hand_started': {
         setMsg(`Hand #${payload.hand_id} 开始`)
-        setCommentary('')
+        setCommentaryList([])
         setLeftTrashTalk('')
         setRightTrashTalk('')
         setLeftThinking('')
         setRightThinking('')
+        // 广播新局开始，重置投票
+        window.dispatchEvent(new CustomEvent('vote:reset'))
         break
       }
 
@@ -272,7 +280,6 @@ export default function App() {
           const side = payload.player === 'AI_A' ? 'A' : 'B'
           showTrashTalk(side, payload.trash_talk)
         }
-        // 思考内容展示在角色旁边
         const thinkText = payload.reasoning
           ? payload.reasoning.substring(0, 70) + (payload.reasoning.length > 70 ? '...' : '')
           : payload.analysis || ''
@@ -303,6 +310,10 @@ export default function App() {
           setMsg(`${wname} 获胜！`)
           if (payload.winner === 'AI_A') { setLeftExpr(8); setRightExpr(9) }
           else { setLeftExpr(9); setRightExpr(8) }
+          // 自动结算投票：AI_A -> A, AI_B -> B
+          const winningSide = payload.winner === 'AI_A' ? 'A' : 'B'
+          const result = voteStore.settle(winningSide)
+          console.log(`[vote] 本局结算：${winningSide} 获胜，${result.correctCount} 人猜对`)
         } else {
           setMsg('平局，平分底池')
           setLeftExpr(12)
@@ -313,14 +324,14 @@ export default function App() {
 
       case 'commentary': {
         if (payload.text) {
-          setCommentary(`🎙️ ${payload.text}`)
+          setCommentaryList(prev => [...prev, `🎙️ ${payload.text}`])
         }
         break
       }
 
       case 'player_reaction': {
         if (payload.text) {
-          setCommentary(`${payload.label || ''}: "${payload.text}"`)
+          setCommentaryList(prev => [...prev, `${payload.label || ''}: "${payload.text}"`])
         }
         break
       }
@@ -350,48 +361,83 @@ export default function App() {
         {connected ? '● 已连接' : '● 未连接'}
       </div>
 
-      {/* 角色立绘 — AI-A 左侧 */}
-      <div className={`character char-left ${isFocusA ? 'focus' : ''} ${isFocusB ? 'dim' : ''}`}>
-        <img src={leftFace} alt={leftName} draggable={false} />
-
-        {/* 喊话气泡 */}
-        {leftTrashTalk && (
-          <div className="trash-talk-bubble left">
-            {leftTrashTalk}
-          </div>
-        )}
-
-        <div className="char-info">
-          <span className="char-name">{leftName}</span>
-          <span className="char-chips">${leftChips}</span>
+      {/* 测试按钮：仅 test=1 时显示 */}
+      {isTestMode && (
+        <div style={{
+          position: 'absolute',
+          top: '12px',
+          right: '12px',
+          display: 'flex',
+          gap: '6px',
+          zIndex: 50,
+        }}>
+          <button
+            onClick={() => {
+              const r = voteStore.settle('A')
+              setMsg(`[测试] A 获胜 — ${r.correctCount} 人猜对`)
+            }}
+            style={{
+              padding: '4px 10px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#fff',
+              background: '#0288d1',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: 0.8,
+            }}
+            onMouseEnter={e => e.target.style.opacity = '1'}
+            onMouseLeave={e => e.target.style.opacity = '0.8'}
+          >
+            结算 A 赢
+          </button>
+          <button
+            onClick={() => {
+              const r = voteStore.settle('B')
+              setMsg(`[测试] B 获胜 — ${r.correctCount} 人猜对`)
+            }}
+            style={{
+              padding: '4px 10px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#fff',
+              background: '#d32f2f',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: 0.8,
+            }}
+            onMouseEnter={e => e.target.style.opacity = '1'}
+            onMouseLeave={e => e.target.style.opacity = '0.8'}
+          >
+            结算 B 赢
+          </button>
+          <button
+            onClick={() => {
+              rankStore.reset()
+              setMsg('[测试] 排行榜已重置')
+            }}
+            style={{
+              padding: '4px 10px',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#fff',
+              background: '#666',
+              border: 'none',
+              borderRadius: '4px',
+              cursor: 'pointer',
+              opacity: 0.8,
+            }}
+            onMouseEnter={e => e.target.style.opacity = '1'}
+            onMouseLeave={e => e.target.style.opacity = '0.8'}
+          >
+            重置排行
+          </button>
         </div>
+      )}
 
-        {/* 底牌 */}
-        <div className="hole-cards">
-          <HoleCard card={leftCards[0]} />
-          <HoleCard card={leftCards[1]} />
-        </div>
-
-        {/* 下注筹码 */}
-        {leftBet > 0 && (
-          <div className="bet-chips">
-            <ChipStack amount={leftBet} size="sm" />
-            <span className="bet-amount">+${leftBet}</span>
-          </div>
-        )}
-
-        {isFocusA && <div className="turn-dot" />}
-
-        {/* 思考内容（左下角） */}
-        {leftThinking && (
-          <div className="thinking-box left">
-            <span className="thinking-label">🧠</span>
-            {leftThinking}
-          </div>
-        )}
-      </div>
-
-      {/* 牌桌 */}
+      {/* 牌桌 — 固定屏幕中央 */}
       <div className="poker-table">
         <div className="table-line" />
 
@@ -420,16 +466,53 @@ export default function App() {
         {msg && <div className="table-msg">{msg}</div>}
       </div>
 
-      {/* 角色立绘 — AI-B 右侧 */}
-      <div className={`character char-right ${isFocusB ? 'focus' : ''} ${isFocusA ? 'dim' : ''}`}>
-        <img src={rightFace} alt={rightName} draggable={false} />
+      {/* 解说栏 — 固定在牌桌正下方 */}
+      {commentaryList.length > 0 && (
+        <div className="commentary-bar">
+          {[...commentaryList.slice(-3)].reverse().map((text, i, arr) => {
+            const opacity = 0.3 + (0.7 * ((arr.length - 1 - i) / (arr.length - 1 || 1)))
+            return (
+              <div key={i} className="commentary-item" style={{ opacity }}>
+                {text}
+              </div>
+            )
+          })}
+        </div>
+      )}
 
-        {/* 喊话气泡 */}
-        {rightTrashTalk && (
-          <div className="trash-talk-bubble right">
-            {rightTrashTalk}
+      {/* 左侧角色 — 仅包含立绘与基本信息 */}
+      <div className={`character char-left ${isFocusA ? 'focus' : ''} ${isFocusB ? 'dim' : ''}`}>
+        <div className="char-img-wrap">
+          <img src={leftFace} alt={leftName} draggable={false} />
+        </div>
+
+        <div className="char-info">
+          <span className="char-name">{leftName}</span>
+          <span className="char-chips">${leftChips}</span>
+        </div>
+
+        {/* 底牌 */}
+        <div className="hole-cards">
+          <HoleCard card={leftCards[0]} />
+          <HoleCard card={leftCards[1]} />
+        </div>
+
+        {/* 下注筹码 */}
+        {leftBet > 0 && (
+          <div className="bet-chips">
+            <ChipStack amount={leftBet} size="sm" />
+            <span className="bet-amount">+${leftBet}</span>
           </div>
         )}
+
+        {isFocusA && <div className="turn-dot" />}
+      </div>
+
+      {/* 右侧角色 */}
+      <div className={`character char-right ${isFocusB ? 'focus' : ''} ${isFocusA ? 'dim' : ''}`}>
+        <div className="char-img-wrap">
+          <img src={rightFace} alt={rightName} draggable={false} />
+        </div>
 
         <div className="char-info">
           <span className="char-name">{rightName}</span>
@@ -451,20 +534,37 @@ export default function App() {
         )}
 
         {isFocusB && <div className="turn-dot" />}
-
-        {/* 思考内容（右下角） */}
-        {rightThinking && (
-          <div className="thinking-box right">
-            <span className="thinking-label">🧠</span>
-            {rightThinking}
-          </div>
-        )}
       </div>
 
-      {/* 解说栏 — 牌桌下方 */}
-      {commentary && (
-        <div className="commentary-bar">
-          {commentary}
+      {/* ===== 覆盖层：气泡与思考文本（独立于角色，不受缩放影响） ===== */}
+
+      {/* 左侧垃圾话气泡 */}
+      {leftTrashTalk && (
+        <div className="trash-talk-bubble bubble-left">
+          {leftTrashTalk}
+        </div>
+      )}
+
+      {/* 右侧垃圾话气泡 */}
+      {rightTrashTalk && (
+        <div className="trash-talk-bubble bubble-right">
+          {rightTrashTalk}
+        </div>
+      )}
+
+      {/* 左侧思考内容 */}
+      {leftThinking && (
+        <div className="thinking-box think-left">
+          <span className="thinking-label">🧠</span>
+          {leftThinking}
+        </div>
+      )}
+
+      {/* 右侧思考内容 */}
+      {rightThinking && (
+        <div className="thinking-box think-right">
+          <span className="thinking-label">🧠</span>
+          {rightThinking}
         </div>
       )}
     </div>

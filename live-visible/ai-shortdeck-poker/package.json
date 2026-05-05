@@ -4,7 +4,8 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "concurrently \"vite\" \"cd ../tts && .\\venv\\Scripts\\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000\" -n frontend,tts -c green,blue",
+    "dev": "vite",
+    "dev:full": "concurrently \"vite\" \"cd ../tts && .\\venv\\Scripts\\python.exe -m uvicorn main:app --host 0.0.0.0 --port 8000\" -n frontend,tts -c green,blue",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"

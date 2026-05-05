@@ -8,12 +8,6 @@
   width: 100%;
   height: 100%;
   background: #08080c;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start;
-  gap: 16px;
-  padding-top: 3vh;
   font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
   color: #f5f5f5;
   user-select: none;
@@ -26,9 +20,9 @@
   position: absolute;
   top: 12px;
   left: 12px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
-  padding: 4px 10px;
+  padding: 5px 12px;
   border-radius: 12px;
   z-index: 50;
   transition: all 0.3s ease;
@@ -54,7 +48,10 @@
 
 /* ---------- 跑道形牌桌 ---------- */
 .poker-table {
-  position: relative;
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   width: min(85vw, 1000px);
   aspect-ratio: 1.75 / 1;
   border-radius: 28.6%;
@@ -63,9 +60,6 @@
     0 0 0 12px #2d1f12,
     0 0 0 14px rgba(0,0,0,0.3),
     0 25px 80px rgba(0,0,0,0.6);
-  display: flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .poker-table::before {
@@ -86,19 +80,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 2px;
+  gap: 6px;
   z-index: 5;
 }
 
 .pot-label {
-  font-size: 10px;
+  font-size: 13px;
   font-weight: 800;
   letter-spacing: 4px;
   color: rgba(255,215,0,0.6);
 }
 
 .pot-value {
-  font-size: 22px;
+  font-size: 28px;
   font-weight: 900;
   color: #ffd700;
   text-shadow: 0 0 12px rgba(255,215,0,0.25);
@@ -117,8 +111,8 @@
 }
 
 .card {
-  width: 42px;
-  height: 58px;
+  width: 50px;
+  height: 68px;
   border-radius: 5px;
   display: flex;
   flex-direction: column;
@@ -142,15 +136,15 @@
 }
 
 .card-rank {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   line-height: 1;
 }
 
 .card-suit {
-  font-size: 16px;
+  font-size: 20px;
   line-height: 1;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
 /* ---------- 桌面消息 ---------- */
@@ -159,7 +153,7 @@
   bottom: 16%;
   left: 50%;
   transform: translateX(-50%);
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 600;
   color: rgba(255,255,255,0.7);
   background: rgba(0,0,0,0.4);
@@ -175,25 +169,32 @@
   to   { opacity: 1; transform: translateX(-50%) translateY(0); }
 }
 
-/* ---------- 解说文字叠加层 ---------- */
-.commentary-overlay {
+/* ---------- 解说栏（牌桌正下方，固定位置） ---------- */
+.commentary-bar {
   position: absolute;
-  bottom: 4%;
+  top: calc(40% + min(24vw, 290px) + 20px);
   left: 50%;
   transform: translateX(-50%);
-  max-width: 80%;
-  font-size: 13px;
+  width: min(80vw, 900px);
+  padding: 8px 0;
+  color: #fff;
+  font-size: 16px;
   font-weight: 500;
-  color: rgba(220, 230, 255, 0.9);
-  background: rgba(10, 15, 35, 0.75);
-  backdrop-filter: blur(6px);
-  padding: 8px 16px;
-  border-radius: 10px;
-  border: 1px solid rgba(100, 150, 255, 0.15);
+  line-height: 1.6;
   text-align: center;
-  line-height: 1.5;
-  z-index: 6;
-  animation: msgIn 0.4s ease;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  z-index: 5;
+}
+
+.commentary-item {
+  padding: 3px 0;
+  transition: opacity 0.3s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 /* ---------- 角色立绘 ---------- */
@@ -205,34 +206,44 @@
   align-items: center;
   gap: 8px;
   z-index: 10;
-  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  transform: translateY(-50%);
 }
 
 .char-left {
-  left: 6%;
-  transform: translateY(-50%) scale(0.82);
+  left: 5%;
 }
 
 .char-right {
-  right: 6%;
-  transform: translateY(-50%) scale(0.82);
+  right: 5%;
 }
 
-.character.focus {
-  transform: translateY(-50%) scale(1);
-}
-
-.character.dim {
-  transform: translateY(-50%) scale(0.72);
+/* 图片固定尺寸容器，缩放只影响内部 img */
+.char-img-wrap {
+  width: min(26vw, 320px);
+  height: min(26vw, 320px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .character img {
-  width: min(26vw, 320px);
-  height: min(26vw, 320px);
+  width: 100%;
+  height: 100%;
   object-fit: contain;
   object-position: center;
   filter: drop-shadow(0 8px 20px rgba(0,0,0,0.4));
   pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* 聚焦时仅放大图片本身 */
+.character.focus img {
+  transform: scale(1.08);
+}
+
+/* 非聚焦时仅缩小图片本身 */
+.character.dim img {
+  transform: scale(0.92);
 }
 
 .char-info {
@@ -243,14 +254,14 @@
 }
 
 .char-name {
-  font-size: 13px;
+  font-size: 16px;
   font-weight: 800;
   letter-spacing: 2px;
   color: rgba(255,255,255,0.85);
 }
 
 .char-chips {
-  font-size: 12px;
+  font-size: 15px;
   font-weight: 700;
   color: #ffd700;
   font-variant-numeric: tabular-nums;
@@ -264,8 +275,8 @@
 }
 
 .hole-card {
-  width: 28px;
-  height: 40px;
+  width: 34px;
+  height: 48px;
   border-radius: 4px;
   background: #f5f5f5;
   display: flex;
@@ -287,24 +298,24 @@
 }
 
 .hole-rank {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1;
 }
 
 .hole-suit {
-  font-size: 12px;
+  font-size: 15px;
   line-height: 1;
-  margin-top: 1px;
+  margin-top: 2px;
 }
 
-/* ---------- 喊话气泡 ---------- */
+/* ---------- 喊话气泡（独立于角色，基于 table-root 定位） ---------- */
 .trash-talk-bubble {
   position: absolute;
-  top: -10px;
-  max-width: 200px;
-  padding: 10px 14px;
-  font-size: 14px;
+  top: 26%;
+  max-width: 260px;
+  padding: 12px 16px;
+  font-size: 16px;
   font-weight: 600;
   color: #1a1a2e;
   background: #fff;
@@ -314,6 +325,8 @@
   animation: bubbleIn 0.3s ease;
   line-height: 1.4;
   text-align: center;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .trash-talk-bubble::after {
@@ -327,25 +340,62 @@
   border-top: 6px solid #fff;
 }
 
-.trash-talk-bubble.left {
-  left: 72%;
+.bubble-left {
+  left: 18%;
 }
 
-.trash-talk-bubble.left::after {
+.bubble-left::after {
   left: 16px;
 }
 
-.trash-talk-bubble.right {
-  right: 72%;
+.bubble-right {
+  right: 18%;
 }
 
-.trash-talk-bubble.right::after {
+.bubble-right::after {
   right: 16px;
 }
 
 @keyframes bubbleIn {
   from { opacity: 0; transform: translateY(6px) scale(0.9); }
   to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---------- 思考内容框（独立于角色，基于 table-root 定位） ---------- */
+.thinking-box {
+  position: absolute;
+  bottom: 24%;
+  max-width: 280px;
+  padding: 10px 14px;
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.8);
+  z-index: 15;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.thinking-label {
+  font-size: 14px;
+  flex-shrink: 0;
+  line-height: 1.5;
+}
+
+.think-left {
+  left: 4%;
+  text-align: left;
+}
+
+.think-right {
+  right: 4%;
+  text-align: right;
+  flex-direction: row-reverse;
 }
 
 /* ---------- 行动指示器 ---------- */
@@ -367,41 +417,39 @@
 
 /* ---------- 筹码 ---------- */
 .chip-stack {
-  display: flex;
-  flex-direction: column-reverse;
+  display: inline-flex;
+  flex-direction: row;
   align-items: center;
+  justify-content: center;
   position: relative;
 }
 
 .chip {
-  width: 22px;
-  height: 22px;
+  width: 26px;
+  height: 26px;
   border-radius: 50%;
-  border: 2px dashed rgba(255,255,255,0.45);
+  border: 2.5px dashed rgba(255,255,255,0.45);
   box-shadow:
     inset 0 0 0 1px rgba(0,0,0,0.15),
     0 1px 3px rgba(0,0,0,0.35);
-  margin-top: -13px;
+  margin: 0 -7px;
   position: relative;
   transition: all 0.3s ease;
-}
-
-.chip:first-child {
-  margin-top: 0;
+  flex-shrink: 0;
 }
 
 .chip-sm {
-  width: 16px;
-  height: 16px;
-  border-width: 1.5px;
-  margin-top: -10px;
+  width: 20px;
+  height: 20px;
+  border-width: 2px;
+  margin: 0 -5px;
 }
 
 .chip-lg {
-  width: 28px;
-  height: 28px;
-  border-width: 2.5px;
-  margin-top: -16px;
+  width: 32px;
+  height: 32px;
+  border-width: 3px;
+  margin: 0 -9px;
 }
 
 .chip-red    { background: #c41e3a; }
@@ -443,7 +491,7 @@
 }
 
 .bet-amount {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
   color: #ffd700;
   text-shadow: 0 1px 3px rgba(0,0,0,0.6);
@@ -462,25 +510,47 @@
   }
 
   .card {
-    width: 34px;
-    height: 48px;
+    width: 40px;
+    height: 56px;
   }
 
-  .card-rank { font-size: 11px; }
-  .card-suit { font-size: 13px; }
+  .card-rank { font-size: 14px; }
+  .card-suit { font-size: 16px; }
 
-  .character img {
-    width: 28vw;
-    height: 28vw;
+  .char-img-wrap {
+    width: 32vw;
+    height: 32vw;
   }
 
-  .char-name { font-size: 11px; }
-  .char-chips { font-size: 10px; }
+  .char-name { font-size: 14px; }
+  .char-chips { font-size: 13px; }
 
-  .pot-value { font-size: 18px; }
-  .table-msg { font-size: 12px; }
-  .commentary-overlay { font-size: 11px; padding: 6px 12px; }
-  .trash-talk-bubble { font-size: 12px; max-width: 160px; padding: 8px 10px; }
-  .thinking-box { font-size: 10px; max-width: 160px; bottom: -44px; }
-  .commentary-bar { font-size: 11px; padding: 6px 12px; max-height: 90px; }
+  .pot-value { font-size: 22px; }
+  .table-msg { font-size: 15px; }
+
+  .commentary-bar {
+    font-size: 14px;
+    padding: 6px 0;
+    width: 92vw;
+    top: calc(40% + min(26vw, 180px) + 12px);
+  }
+
+  .trash-talk-bubble {
+    font-size: 14px;
+    max-width: 200px;
+    padding: 10px 12px;
+    top: 22%;
+  }
+
+  .bubble-left { left: 30%; }
+  .bubble-right { right: 30%; }
+
+  .thinking-box {
+    font-size: 13px;
+    max-width: 200px;
+    bottom: 18%;
+  }
+
+  .think-left { left: 2%; }
+  .think-right { right: 2%; }
 }

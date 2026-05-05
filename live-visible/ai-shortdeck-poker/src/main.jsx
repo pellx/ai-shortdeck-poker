@@ -120,7 +120,7 @@ function TTSControlPanel() {
   return (
     <div style={{
       position: 'absolute',
-      top: '12px',
+      bottom: '12px',
       right: '12px',
       zIndex: 9999,
       display: 'flex',
@@ -230,7 +230,7 @@ createRoot(document.getElementById('root')).render(
         <App />
       </div>
 
-      {/* TTS 测试浮动面板 — 绝对定位右上角，不影响其他元素 */}
+      {/* TTS 测试浮动面板 — 绝对定位右下角，不影响其他元素 */}
       <TTSControlPanel />
     </div>
   </StrictMode>,

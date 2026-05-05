@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { voteStore } from './voteStore'
 
 const USERS = [
   '喵喵拳', '星际旅人', '夜航船', '可乐加冰', '风一样的男子',
@@ -65,10 +66,148 @@ function getAvatar(name) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=64&font-size=0.4&length=1`
 }
 
+/* ===== 投票条组件 ===== */
+function VoteBar({ stats, theme }) {
+  const { totalA, totalB, total, percentA, percentB } = stats
+  const recentA = voteStore.getRecentVoters('A', 4)
+  const recentB = voteStore.getRecentVoters('B', 4)
+
+  if (total === 0) {
+    return (
+      <div style={{
+        padding: '8px 10px',
+        marginBottom: '6px',
+        background: theme.cardBg,
+        border: theme.cardBorder,
+        borderRadius: '6px',
+        backdropFilter: 'blur(6px)',
+        WebkitBackdropFilter: 'blur(6px)',
+      }}>
+        <div style={{
+          textAlign: 'center',
+          color: theme.textColor,
+          fontSize: '13px',
+          opacity: 0.7,
+        }}>
+          💬 弹幕发送 <b style={{ color: '#4fc3f7' }}>A</b> 或 <b style={{ color: '#ff8a80' }}>B</b> 预测胜利方
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div style={{
+      padding: '8px 10px',
+      marginBottom: '6px',
+      background: theme.cardBg,
+      border: theme.cardBorder,
+      borderRadius: '6px',
+      backdropFilter: 'blur(6px)',
+      WebkitBackdropFilter: 'blur(6px)',
+    }}>
+      {/* 百分比条 */}
+      <div style={{
+        display: 'flex',
+        height: '22px',
+        borderRadius: '4px',
+        overflow: 'hidden',
+        marginBottom: '6px',
+      }}>
+        <div style={{
+          width: `${percentA}%`,
+          background: 'linear-gradient(90deg, #0288d1, #4fc3f7)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-start',
+          paddingLeft: '8px',
+          transition: 'width 0.5s ease',
+          minWidth: percentA > 0 ? '30px' : '0',
+        }}>
+          {percentA >= 15 && (
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>{percentA}%</span>
+          )}
+        </div>
+        <div style={{
+          width: `${percentB}%`,
+          background: 'linear-gradient(90deg, #ff8a80, #d32f2f)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'flex-end',
+          paddingRight: '8px',
+          transition: 'width 0.5s ease',
+          minWidth: percentB > 0 ? '30px' : '0',
+        }}>
+          {percentB >= 15 && (
+            <span style={{ color: '#fff', fontSize: '12px', fontWeight: 700 }}>{percentB}%</span>
+          )}
+        </div>
+      </div>
+
+      {/* 票数 + 头像 */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        {/* A 侧 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <span style={{ color: '#4fc3f7', fontSize: '13px', fontWeight: 700, minWidth: '22px' }}>
+            A {totalA}
+          </span>
+          <div style={{ display: 'flex', marginLeft: '2px' }}>
+            {recentA.map((v, i) => (
+              <img
+                key={v.uid}
+                src={v.avatar || getAvatar(v.uname)}
+                alt=""
+                referrerPolicy="no-referrer"
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: '1.5px solid #4fc3f7',
+                  marginLeft: i > 0 ? '-6px' : '0',
+                  zIndex: recentA.length - i,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* 中间 VS */}
+        <span style={{ color: theme.textColor, fontSize: '11px', opacity: 0.5, fontWeight: 600 }}>VS</span>
+
+        {/* B 侧 */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', flexDirection: 'row-reverse' }}>
+          <span style={{ color: '#ff8a80', fontSize: '13px', fontWeight: 700, minWidth: '22px', textAlign: 'right' }}>
+            {totalB} B
+          </span>
+          <div style={{ display: 'flex', marginRight: '2px', flexDirection: 'row-reverse' }}>
+            {recentB.map((v, i) => (
+              <img
+                key={v.uid}
+                src={v.avatar || getAvatar(v.uname)}
+                alt=""
+                referrerPolicy="no-referrer"
+                style={{
+                  width: '20px',
+                  height: '20px',
+                  borderRadius: '50%',
+                  border: '1.5px solid #ff8a80',
+                  marginRight: i > 0 ? '-6px' : '0',
+                  zIndex: recentB.length - i,
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function Danmu({ isExpanded }) {
   const [messages, setMessages] = useState([])
   const [status, setStatus] = useState('')
+  const [voteStats, setVoteStats] = useState(() => voteStore.getStats())
   const idRef = useRef(0)
+  const faceCache = useRef(new Map())
 
   const params = new URLSearchParams(window.location.search)
   const roomId = params.get('roomId') || '模拟房间'
@@ -77,6 +216,80 @@ function Danmu({ isExpanded }) {
 
   // 从 localStorage 读取 B站 Cookie（config.json 不存在时的 fallback）
   const localCookie = localStorage.getItem('bili_cookie') || ''
+
+  // 订阅投票统计变化
+  useEffect(() => {
+    const unsubscribe = voteStore.subscribe(setVoteStats)
+    return unsubscribe
+  }, [])
+
+  // 监听新局重置事件
+  useEffect(() => {
+    const handleReset = () => {
+      voteStore.reset()
+      setMessages(prev => [{
+        id: idRef.current++,
+        user: '系统',
+        content: '🗳️ 新一局开始，投票已重置',
+        avatar: getAvatar('系统'),
+        hasBadges: false,
+        isSystem: true,
+      }, ...prev].slice(0, 30))
+    }
+    window.addEventListener('vote:reset', handleReset)
+    return () => window.removeEventListener('vote:reset', handleReset)
+  }, [])
+
+  // 监听结算事件，显示结算结果
+  useEffect(() => {
+    const handleSettled = (e) => {
+      const { winningSide, correctCount, wrongCount } = e.detail
+      setMessages(prev => [{
+        id: idRef.current++,
+        user: '系统',
+        content: `🎉 ${winningSide} 方获胜！${correctCount} 人猜对，${wrongCount} 人猜错`,
+        avatar: getAvatar('系统'),
+        hasBadges: false,
+        isSystem: true,
+      }, ...prev].slice(0, 30))
+    }
+    window.addEventListener('vote:settled', handleSettled)
+    return () => window.removeEventListener('vote:settled', handleSettled)
+  }, [])
+
+  /* 处理投票弹幕 */
+  const handleVote = useCallback((uid, uname, avatar, content) => {
+    const vote = content.toUpperCase()
+    if (vote !== 'A' && vote !== 'B') return false
+
+    const result = voteStore.vote(uid, uname, avatar, vote)
+
+    // 生成投票反馈消息
+    let feedback = ''
+    if (result.isNew) {
+      feedback = `🗳️ 预测 ${vote} 方获胜`
+    } else if (result.isChanged) {
+      feedback = `🔄 改投 ${vote} 方`
+    } else {
+      feedback = `✅ 已投 ${vote} 方`
+    }
+
+    setMessages(prev => {
+      const next = [{
+        id: idRef.current++,
+        uid,
+        user: uname,
+        content: feedback,
+        avatar,
+        hasBadges: false,
+        isVote: true,
+      }, ...prev]
+      if (next.length > 30) next.pop()
+      return next
+    })
+
+    return true
+  }, [])
 
   useEffect(() => {
     let cleanupFn = null
@@ -99,12 +312,24 @@ function Danmu({ isExpanded }) {
       const timer = setInterval(() => {
         setMessages((prev) => {
           const user = randomPick(USERS)
+          // 模拟投票：10% 概率投 A，10% 概率投 B
+          const r = Math.random()
+          const content = r < 0.1 ? 'A' : r < 0.2 ? 'B' : randomPick(CONTENTS)
+          const uid = 100000 + Math.floor(Math.random() * 900000)
+          const avatar = getAvatar(user)
+
+          if (content === 'A' || content === 'B') {
+            handleVote(uid, user, avatar, content)
+            return prev
+          }
+
           const next = [
             {
               id: idRef.current++,
+              uid,
               user,
-              content: randomPick(CONTENTS),
-              avatar: getAvatar(user),
+              content,
+              avatar,
               hasBadges: Math.random() > 0.4,
             },
             ...prev,
@@ -146,14 +371,8 @@ function Danmu({ isExpanded }) {
         // config.json 不存在或读取失败
       }
 
-      // 从 Cookie 中提取 uid
+      // 获取 B站弹幕认证参数（token / buvid / uid / 真实房间号）
       let uid = 0
-      if (cookie) {
-        const m = cookie.match(/DedeUserID=(\d+)/)
-        if (m) uid = Number(m[1])
-      }
-
-      // 获取 B站弹幕认证参数（token / buvid / 真实房间号）
       let token = preToken
       let buvid = preBuvid
       let realRoomId = Number(roomId)
@@ -162,15 +381,25 @@ function Danmu({ isExpanded }) {
       try {
         const authRes = await fetch(`/api/bili/auth?roomId=${roomId}`)
         const authJson = await authRes.json()
+        console.log('[danmu] /api/bili/auth 返回:', JSON.stringify(authJson))
         if (authJson.code === 0 && authJson.data) {
+          uid = authJson.data.uid || uid
           token = authJson.data.token || token
           buvid = authJson.data.buvid || buvid
           realRoomId = authJson.data.roomId || realRoomId
           wsHost = authJson.data.host || wsHost
           wsPort = authJson.data.port || wsPort
+        } else {
+          console.warn('[danmu] /api/bili/auth 返回错误，使用预配置参数')
         }
       } catch (e) {
-        console.warn('[danmu] /api/bili/auth 不可用，尝试使用预配置参数', e.message)
+        console.warn('[danmu] /api/bili/auth 请求失败，使用预配置参数', e.message)
+      }
+
+      // fallback: 如果 API 没返回 uid，尝试从 cookie 中提取
+      if (!uid && cookie) {
+        const m = cookie.match(/DedeUserID=(\d+)/)
+        if (m) uid = Number(m[1])
       }
 
       // 如果仍然没有 buvid，尝试从 cookie 中提取
@@ -191,28 +420,89 @@ function Danmu({ isExpanded }) {
       if (wsHost) {
         wsOptions.host = wsHost
         wsOptions.port = wsPort
-        wsOptions.ssl = wsPort === 443
+        wsOptions.ssl = true
+      }
+      console.log('[danmu] 连接参数:', {
+        roomId: realRoomId,
+        uid,
+        token: token ? token.slice(0, 20) + '...' : '空',
+        buvid: buvid ? buvid.slice(0, 20) + '...' : '空',
+        host: wsHost,
+        port: wsPort,
+        ssl: wsOptions.ssl,
+        protover: wsOptions.protover,
+      })
+
+      if (!token && !buvid) {
+        console.warn('[danmu] token 和 buvid 均为空，无法建立真实弹幕连接，切换模拟弹幕')
+        setStatus(`房间 ${realRoomId} · 缺少认证参数，已切换模拟弹幕`)
+        startMockDanmu()
+        return
       }
 
       try {
         const { startListen } = await import('blive-message-listener/browser')
         instance = startListen(realRoomId, {
-          onOpen: () => setStatus(`房间 ${realRoomId} · 已连接`),
-          onClose: () => setStatus(`房间 ${realRoomId} · 已断开`),
+          onOpen: () => {
+            console.log('[danmu] WebSocket onOpen')
+            setStatus(`房间 ${realRoomId} · 已连接`)
+          },
+          onClose: () => {
+            console.log('[danmu] WebSocket onClose')
+            setStatus(`房间 ${realRoomId} · 已断开`)
+          },
+          onStartListen: () => {
+            console.log('[danmu] 认证成功，开始监听')
+          },
           onError: (err) => {
-            console.error('弹幕连接错误', err)
+            console.error('[danmu] 连接错误', err)
             setStatus(`房间 ${realRoomId} · 连接失败，已切换模拟弹幕`)
             if (instance) { instance.close(); instance = null }
             startMockDanmu() // fallback
           },
+          onAttentionChange: (msg) => {
+            console.log('[danmu] 心跳/在线人数:', msg.data?.attention)
+          },
           onIncomeDanmu: (msg) => {
+            const uid = msg.body.user.uid
+            const uname = msg.body.user.uname
+            const content = msg.body.content.trim()
+            let avatar = faceCache.current.get(uid)
+
+            // 检测投票指令 A/B
+            if (/^[AaBb]$/.test(content)) {
+              handleVote(uid, uname, avatar || getAvatar(uname), content)
+              return
+            }
+
+            if (!avatar) {
+              avatar = getAvatar(uname)
+              // 异步获取真实头像并更新
+              fetch(`/api/bili/user?uid=${uid}`)
+                .then(r => r.json())
+                .then(res => {
+                  if (res.code === 0 && res.data?.face) {
+                    faceCache.current.set(uid, res.data.face)
+                    setMessages(prev => prev.map(m =>
+                      m.uid === uid ? { ...m, avatar: res.data.face } : m
+                    ))
+                    // 同步更新投票缓存中的头像
+                    const voteRec = voteStore.votes?.get?.(uid)
+                    if (voteRec) {
+                      voteStore.vote(uid, voteRec.uname, res.data.face, voteRec.vote)
+                    }
+                  }
+                })
+                .catch(() => {})
+            }
             setMessages((prev) => {
               const next = [
                 {
                   id: msg.id,
-                  user: msg.body.user.uname,
+                  uid,
+                  user: uname,
                   content: msg.body.content,
-                  avatar: msg.body.user.face || getAvatar(msg.body.user.uname),
+                  avatar,
                   hasBadges: (msg.body.user.identity?.guard_level ?? 0) > 0,
                 },
                 ...prev,
@@ -220,6 +510,20 @@ function Danmu({ isExpanded }) {
               if (next.length > 30) next.pop()
               return next
             })
+          },
+          raw: {
+            DANMU_MSG: (data) => {
+              console.log('[danmu] 原始 DANMU_MSG:', JSON.stringify(data).slice(0, 500))
+            },
+            CONNECT_SUCCESS: (data) => {
+              console.log('[danmu] 原始 CONNECT_SUCCESS:', JSON.stringify(data))
+            },
+            HEARTBEAT_REPLY: (data) => {
+              console.log('[danmu] 原始 HEARTBEAT_REPLY:', data)
+            },
+            USER_AUTHENTICATION: (data) => {
+              console.log('[danmu] 原始 USER_AUTHENTICATION:', JSON.stringify(data))
+            },
           },
         }, { ws: wsOptions })
         cleanupFn = () => { if (instance) instance.close() }
@@ -235,7 +539,7 @@ function Danmu({ isExpanded }) {
     return () => {
       if (cleanupFn) cleanupFn()
     }
-  }, [roomId, theme.name])
+  }, [roomId, theme.name, handleVote])
 
   return (
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
@@ -255,6 +559,9 @@ function Danmu({ isExpanded }) {
           pointerEvents: 'none',
         }}
       >
+        {/* 投票条 */}
+        <VoteBar stats={voteStats} theme={theme} />
+
         {/* 调试提示：{status} | 切换主题 ?theme=dark / light / blue / purple / green */}
         {messages.map((msg) => (
           <div
@@ -265,17 +572,20 @@ function Danmu({ isExpanded }) {
               marginBottom: '8px',
               animation: 'danmuSlideDown 0.1s ease-out',
               maxWidth: 'fit-content',
+              opacity: msg.isSystem ? 0.7 : 1,
             }}
           >
             {/* 头像：在信息栏左上方，z-index 更高 */}
             <img
               src={msg.avatar}
               alt=""
+              referrerPolicy="no-referrer"
+              onError={(e) => { e.target.src = getAvatar(msg.user) }}
               style={{
                 width: '50px',
                 height: '50px',
                 borderRadius: '50%',
-                border: '3px solid #4CAF50',
+                border: msg.isVote ? '3px solid #FFD700' : '3px solid #4CAF50',
                 background: '#C8E6C9',
                 flexShrink: 0,
                 zIndex: 2,
@@ -305,7 +615,7 @@ function Danmu({ isExpanded }) {
               >
                 <span
                   style={{
-                    color: theme.userColor,
+                    color: msg.isSystem ? '#aaa' : theme.userColor,
                     fontWeight: 700,
                     fontSize: '14px',
                     flexShrink: 0,
@@ -334,12 +644,12 @@ function Danmu({ isExpanded }) {
               {/* 信息栏：弹幕内容 */}
               <div
                 style={{
-                  background: theme.cardBg,
-                  border: theme.cardBorder,
+                  background: msg.isVote ? 'rgba(255,215,0,0.15)' : theme.cardBg,
+                  border: msg.isVote ? '1px solid rgba(255,215,0,0.4)' : theme.cardBorder,
                   borderRadius: '5px',
                   padding: '7px 14px',
                   paddingLeft: '21px',
-                  color: theme.textColor,
+                  color: msg.isVote ? '#FFD700' : theme.textColor,
                   fontSize: '14px',
                   fontWeight: 500,
                   wordBreak: 'break-all',

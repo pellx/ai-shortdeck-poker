@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { rankStore } from './rankStore'
 
 const THEMES = {
   dark: {
@@ -34,20 +35,6 @@ const PODIUM_COLORS = {
   3: { bg: '#CD7F32', text: '#5C3A10', shadow: 'rgba(205,127,50,0.35)' },
 }
 
-// 测试数据：用户猜对次数
-const TEST_RANK_DATA = [
-  { user: '无敌暴龙战士', correct: 15 },
-  { user: '喵喵拳', correct: 12 },
-  { user: '被窝探险家', correct: 10 },
-  { user: '奶茶续命', correct: 8 },
-  { user: '摸鱼大师', correct: 7 },
-  { user: '风一样的男子', correct: 5 },
-  { user: '早八毁灭者', correct: 4 },
-  { user: '香菜不吃', correct: 3 },
-  { user: '星际旅人', correct: 2 },
-  { user: '吃瓜群众', correct: 1 },
-]
-
 function getAvatar(name, size = 64) {
   return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random&color=fff&size=${size}&font-size=0.4&length=1`
 }
@@ -69,8 +56,9 @@ function PodiumItem({ rank, item, theme }) {
       }}
     >
       <img
-        src={getAvatar(item.user, 128)}
+        src={item.avatar || getAvatar(item.user, 128)}
         alt=""
+        referrerPolicy="no-referrer"
         style={{
           width: `${avatarSize}px`,
           height: `${avatarSize}px`,
@@ -144,15 +132,15 @@ function PodiumItem({ rank, item, theme }) {
 }
 
 function RankList({ isExpanded }) {
-  const [ranks, setRanks] = useState([])
+  const [ranks, setRanks] = useState(() => rankStore.getTopRanks())
 
   const params = new URLSearchParams(window.location.search)
   const themeKey = params.get('theme') || 'dark'
   const theme = THEMES[themeKey] || THEMES.dark
 
   useEffect(() => {
-    const sorted = [...TEST_RANK_DATA].sort((a, b) => b.correct - a.correct)
-    setRanks(sorted.slice(0, 10))
+    const unsubscribe = rankStore.subscribe(setRanks)
+    return unsubscribe
   }, [])
 
   const top3 = ranks.slice(0, 3)
@@ -168,8 +156,8 @@ function RankList({ isExpanded }) {
         color: theme.textColor,
       }}
     >
-      {/* 领奖台：前三名始终显示 */}
-      {top3.length === 3 && (
+      {/* 领奖台：有数据就显示（不满3人时居中占位） */}
+      {top3.length > 0 && (
         <div
           style={{
             display: 'flex',
@@ -179,9 +167,24 @@ function RankList({ isExpanded }) {
             padding: '10px 8px 0',
           }}
         >
-          <PodiumItem rank={2} item={top3[1]} theme={theme} />
+          {top3.length >= 2 && <PodiumItem rank={2} item={top3[1]} theme={theme} />}
           <PodiumItem rank={1} item={top3[0]} theme={theme} />
-          <PodiumItem rank={3} item={top3[2]} theme={theme} />
+          {top3.length >= 3 && <PodiumItem rank={3} item={top3[2]} theme={theme} />}
+        </div>
+      )}
+
+      {/* 空状态 */}
+      {ranks.length === 0 && (
+        <div
+          style={{
+            textAlign: 'center',
+            padding: '20px 8px',
+            color: theme.subTextColor,
+            fontSize: '13px',
+          }}
+        >
+          🏆 暂无预测记录<br />
+          <span style={{ fontSize: '12px' }}>发送弹幕 A 或 B 参与预测</span>
         </div>
       )}
 
@@ -199,7 +202,7 @@ function RankList({ isExpanded }) {
           const rankNum = index + 4
           return (
             <div
-              key={item.user}
+              key={item.uid || item.user}
               style={{
                 display: 'flex',
                 alignItems: 'center',
@@ -220,8 +223,9 @@ function RankList({ isExpanded }) {
                 {rankNum}
               </span>
               <img
-                src={getAvatar(item.user, 64)}
+                src={item.avatar || getAvatar(item.user, 64)}
                 alt=""
+                referrerPolicy="no-referrer"
                 style={{
                   width: '22px',
                   height: '22px',

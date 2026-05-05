@@ -102,7 +102,19 @@ async function getDanmuAuth(roomId, cookie) {
   const fullCookie = cookie + (buvid3 ? `; buvid3=${buvid3}` : '')
   console.log('[bili-proxy] fullCookie length:', fullCookie.length)
 
-  // 2. mobileRoomInit
+  // 2. Get real uid from nav API (uid=0 is now rejected by B站)
+  let uid = 0
+  try {
+    const navRes = await fetchJson('https://api.bilibili.com/x/web-interface/nav', fullCookie)
+    if (navRes.code === 0 && navRes.data?.isLogin) {
+      uid = navRes.data.mid || 0
+      console.log('[bili-proxy] uid from nav:', uid)
+    }
+  } catch (e) {
+    console.warn('[bili-proxy] nav warning:', e.message)
+  }
+
+  // 3. mobileRoomInit
   const initRes = await fetchJson(`https://api.live.bilibili.com/room/v1/Room/mobileRoomInit?id=${roomId}`, fullCookie)
   console.log('[bili-proxy] initRes code:', initRes.code)
   if (initRes.code !== 0) {
@@ -110,11 +122,11 @@ async function getDanmuAuth(roomId, cookie) {
   }
   const realRoomId = initRes.data.room_id
 
-  // 3. WBI keys (no cache to avoid stale keys)
+  // 4. WBI keys (no cache to avoid stale keys)
   const { imgKey, subKey } = await getWbiKeys(fullCookie)
   console.log('[bili-proxy] wbi keys:', imgKey.slice(0, 8), subKey.slice(0, 8))
 
-  // 4. getDanmuInfo with WBI sign
+  // 5. getDanmuInfo with WBI sign
   const signed = wbiSign({ id: realRoomId, type: 0 }, imgKey, subKey)
   console.log('[bili-proxy] signed:', signed)
   const danmuRes = await fetchJson('https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo?' + signed, fullCookie)
@@ -131,6 +143,7 @@ async function getDanmuAuth(roomId, cookie) {
       roomId: realRoomId,
       token: danmuRes.data.token,
       buvid: buvid3,
+      uid: uid,
       host: host?.host,
       port: host?.wss_port || host?.port || 2245,
       wsPort: host?.ws_port || 2244
@@ -158,6 +171,32 @@ function registerMiddleware(serverOrPreview) {
       res.end(JSON.stringify(result))
     } catch (err) {
       console.error('[bili-proxy] auth error:', err.message)
+      res.statusCode = 500
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify({ code: -1, message: err.message }))
+    }
+  })
+
+  serverOrPreview.middlewares.use('/api/bili/user', async (req, res, next) => {
+    if (req.method !== 'GET') return next()
+    const url = new URL(req.url, `http://${req.headers.host}`)
+    const uid = url.searchParams.get('uid')
+    if (!uid) {
+      res.statusCode = 400
+      res.setHeader('Content-Type', 'application/json')
+      res.end(JSON.stringify({ code: -1, message: 'uid required' }))
+      return
+    }
+    try {
+      const cookie = getCookie()
+      const userRes = await fetchJson(`https://api.bilibili.com/x/web-interface/card?mid=${uid}&photo=true`, cookie)
+      const face = userRes.data?.card?.face || ''
+      res.statusCode = 200
+      res.setHeader('Content-Type', 'application/json')
+      res.setHeader('Access-Control-Allow-Origin', '*')
+      res.end(JSON.stringify({ code: 0, data: { uid: Number(uid), face } }))
+    } catch (err) {
+      console.error('[bili-proxy] user error:', err.message)
       res.statusCode = 500
       res.setHeader('Content-Type', 'application/json')
       res.end(JSON.stringify({ code: -1, message: err.message }))
